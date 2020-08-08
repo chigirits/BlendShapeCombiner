@@ -10,7 +10,7 @@ Unity 2018.4 以降
 
 ### unitypackageをインポートする方法
 
-Release ページより `BlendShapeCombiner-vX.X.X.unitypackage` をダウンロードし、Unityにインポートする
+[Releasesページ](https://github.com/chigirits/BlendShapeCombiner/releases) より最新版の `BlendShapeCombiner-vX.X.X.unitypackage` をダウンロードし、Unityにインポートする
 
 ### パッケージマネージャを用いる方法
 
