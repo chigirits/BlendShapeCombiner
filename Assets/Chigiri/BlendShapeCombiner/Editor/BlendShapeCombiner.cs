@@ -2,6 +2,8 @@
 using UnityEditor;
 using System.Text.RegularExpressions;
 
+#if UNITY_EDITOR
+
 namespace Chigiri.BlendShapeCombiner
 {
     public class BlendShapeCombiner : ScriptableWizard
@@ -163,3 +165,5 @@ namespace Chigiri.BlendShapeCombiner
 
     }
 }
+
+#endif // UNITY_EDITOR
