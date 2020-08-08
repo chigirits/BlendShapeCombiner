@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setenv
+        run: |
+          echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/})"
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Prepare Build
+        run: |
+          mkdir build
+          find ./Assets/Chigiri/BlendShapeCombiner -name \*.meta > metaList
+
+      - name: create-unitypackage
+        uses: pCYSl5EDgo/create-unitypackage@v1
+        with:
+          package-path: build/BlendShapeCombiner-${{ env.RELEASE_VERSION }}.unitypackage
+          include-files: metaList
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: unitypackage
+          path: build/BlendShapeCombiner-${{ env.RELEASE_VERSION }}.unitypackage
