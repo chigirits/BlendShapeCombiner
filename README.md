@@ -31,3 +31,8 @@ Unity 2018.4 以降
    ![usage-03](https://user-images.githubusercontent.com/61717977/89705648-00cf5480-d99a-11ea-9991-fdd23459b053.png)
 4. SkinnedMeshRendererのメッシュを新しいものに差し替え、キーが増えていることを確認<br>
    ![usage-04](https://user-images.githubusercontent.com/61717977/89705650-0167eb00-d99a-11ea-9226-d0caa7bca331.png)
+
+## 備考
+
+- [unity3d-jp/BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder) から一部コードを借用しています（[MIT License](https://github.com/unity3d-jp/BlendShapeBuilder/blob/master/LICENSE.txt)）。
+- 本パッケージのライセンスも [MIT License](./LICENSE) です。
