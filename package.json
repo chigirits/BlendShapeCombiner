@@ -1,7 +1,7 @@
 {
     "name": "com.github.chigirits.blendshapecombiner",
     "displayName": "BlendShapeCombiner",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "unity": "2018.4",
     "description": "Combine multiple blend shapes to create a new shape key and save as a new mesh.",
     "keywords": ["mesh", "blendshape"],

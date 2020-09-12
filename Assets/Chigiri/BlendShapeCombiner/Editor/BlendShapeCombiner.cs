@@ -8,8 +8,29 @@ namespace Chigiri.BlendShapeCombiner.Editor
     {
 
         public SkinnedMeshRenderer target;
-        public string[] sourceKeys = new string[] { "", "" };
-        public string newKey;
+        public NewKey[] newKeys = new NewKey[]{
+            new NewKey{
+                name = "",
+                sourceKeys = new SourceKey[] {
+                    new SourceKey{ name = "", scale = 1.0f },
+                    new SourceKey{ name = "", scale = 1.0f }
+                }
+            }
+        };
+
+        [System.Serializable]
+        public class NewKey
+        {
+            public string name;
+            public SourceKey[] sourceKeys;
+        }
+
+        [System.Serializable]
+        public class SourceKey
+        {
+            public string name;
+            public float scale = 1.0f;
+        }
 
         [MenuItem("Chigiri/BlendShapeCombiner")]
         static void Open()
@@ -31,38 +52,49 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 isValid = false;
                 return;
             }
-            if (sourceKeys.Length < 2)
+            if (newKeys.Length < 1)
             {
-                errorString = "Source Keys を2つ以上指定してください";
+                errorString = "New Keys を1つ以上指定してください";
                 isValid = false;
                 return;
             }
-            for (var i = 0; i < sourceKeys.Length; i++)
+            for (var j = 0; j < newKeys.Length; j++)
             {
-                if (sourceKeys[i] == "")
+                var newKey = newKeys[j];
+                if (newKey.name == "")
                 {
-                    errorString = $"Source Keys の Element [{i}] を指定してください";
+                    errorString = $"New Keys > Element [{j}] > Name に新しく作成するシェイプキーの名前を指定してください";
                     isValid = false;
                     return;
                 }
-                if (target.sharedMesh.GetBlendShapeIndex(sourceKeys[i]) < 0)
+                if (0 <= target.sharedMesh.GetBlendShapeIndex(newKey.name))
                 {
-                    errorString = $"Source Keys の Element [{i}] に指定されたシェイプキーは存在しません";
+                    errorString = $"New Keys > Element [{j}] > Name に指定されたシェイプキーは定義済みです。新しい名前を指定してください";
                     isValid = false;
                     return;
                 }
-            }
-            if (newKey == "")
-            {
-                errorString = "New Key を指定してください";
-                isValid = false;
-                return;
-            }
-            if (0 <= target.sharedMesh.GetBlendShapeIndex(newKey))
-            {
-                errorString = "New Key に指定されたシェイプキーは定義済みです。新しい名前を指定してください";
-                isValid = false;
-                return;
+                if (newKey.sourceKeys.Length < 1)
+                {
+                    errorString = $"New Keys > Element [{j}] > Source Keys を1つ以上指定してください";
+                    isValid = false;
+                    return;
+                }
+                for (var i = 0; i < newKey.sourceKeys.Length; i++)
+                {
+                    var key = newKey.sourceKeys[i];
+                    if (key.name == "")
+                    {
+                        errorString = $"New Keys > Element [{j}] > Source Keys > Element [{i}] > Name にコピー元シェイプキーの名前を指定してください";
+                        isValid = false;
+                        return;
+                    }
+                    if (target.sharedMesh.GetBlendShapeIndex(key.name) < 0)
+                    {
+                        errorString = $"New Keys > Element [{j}] > Source Keys > Element [{i}] > Name に指定されたシェイプキーは存在しません";
+                        isValid = false;
+                        return;
+                    }
+                }
             }
             errorString = "";
             isValid = true;
@@ -90,10 +122,10 @@ namespace Chigiri.BlendShapeCombiner.Editor
             return baseMesh;
         }
 
-        static Vector3[] AddVector3(Vector3[] src0, Vector3[] src1)
+        static Vector3[] AddVector3(Vector3[] src0, Vector3[] src1, float scale)
         {
             var result = new Vector3[src0.Length];
-            for (int i=0; i<src0.Length; i++) result[i] = src0[i] + src1[i];
+            for (int i=0; i<src0.Length; i++) result[i] = src0[i] + src1[i] * scale;
             return result;
         }
 
@@ -128,35 +160,40 @@ namespace Chigiri.BlendShapeCombiner.Editor
             ret.name = baseMesh.name;
             var src = Instantiate(ret);
 
-            var n = sourceKeys.Length;
-            var newFrames = 0;
-            for (var i = 0; i < n; i++)
+            foreach (var newKey in newKeys)
             {
-                int index = src.GetBlendShapeIndex(sourceKeys[i]);
-                int numFrames = src.GetBlendShapeFrameCount(index);
-                if (i == 0 || numFrames < newFrames) newFrames = numFrames;
-            }
-
-            var tempVertices = new Vector3[baseMesh.vertexCount];
-            var tempNormals = new Vector3[baseMesh.vertexCount];
-            var tempTangents = new Vector3[baseMesh.vertexCount];
-
-            for (var frame=0; frame<newFrames; frame++)
-            {
-                float weight = 0.0f;
-                var vertices = new Vector3[baseMesh.vertexCount];
-                var normals = new Vector3[baseMesh.vertexCount];
-                var tangents = new Vector3[baseMesh.vertexCount];
-                for (var i=0; i<n; i++)
+                var n = newKey.sourceKeys.Length;
+                var newFrames = 0;
+                for (var i = 0; i < n; i++)
                 {
-                    int index = src.GetBlendShapeIndex(sourceKeys[i]);
-                    weight += src.GetBlendShapeFrameWeight(index, frame);
-                    baseMesh.GetBlendShapeFrameVertices(index, frame, tempVertices, tempNormals, tempTangents);
-                    vertices = AddVector3(vertices, tempVertices);
-                    normals = AddVector3(normals, tempNormals);
-                    tangents = AddVector3(tangents, tempTangents);
+                    var key = newKey.sourceKeys[i];
+                    int index = src.GetBlendShapeIndex(key.name);
+                    int numFrames = src.GetBlendShapeFrameCount(index);
+                    if (i == 0 || numFrames < newFrames) newFrames = numFrames;
                 }
-                ret.AddBlendShapeFrame(newKey, weight/n, vertices, normals, tangents);
+
+                var tempVertices = new Vector3[baseMesh.vertexCount];
+                var tempNormals = new Vector3[baseMesh.vertexCount];
+                var tempTangents = new Vector3[baseMesh.vertexCount];
+
+                for (var frame=0; frame<newFrames; frame++)
+                {
+                    float weight = 0.0f;
+                    var vertices = new Vector3[baseMesh.vertexCount];
+                    var normals = new Vector3[baseMesh.vertexCount];
+                    var tangents = new Vector3[baseMesh.vertexCount];
+                    for (var i=0; i<n; i++)
+                    {
+                        var key = newKey.sourceKeys[i];
+                        int index = src.GetBlendShapeIndex(key.name);
+                        weight += src.GetBlendShapeFrameWeight(index, frame);
+                        baseMesh.GetBlendShapeFrameVertices(index, frame, tempVertices, tempNormals, tempTangents);
+                        vertices = AddVector3(vertices, tempVertices, key.scale);
+                        normals = AddVector3(normals, tempNormals, key.scale);
+                        tangents = AddVector3(tangents, tempTangents, key.scale);
+                    }
+                    ret.AddBlendShapeFrame(newKey.name, weight/n, vertices, normals, tangents);
+                }
             }
             return ret;
         }
