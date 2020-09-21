@@ -17,7 +17,7 @@ Unity 2018.4 以降
 ### パッケージマネージャを用いる方法
 
 1. インポート先プロジェクトの `Packages/manifest.json` をテキストエディタ等で開く
-2. `dependencies` の配列内に以下の行を追加
+2. `dependencies` オブジェクト内に以下の要素を追加
    
    ```
    "com.github.chigirits.blendshapecombiner": "https://github.com/chigirits/BlendShapeCombiner.git",
@@ -25,18 +25,31 @@ Unity 2018.4 以降
 
 ## 使い方
 
-1. メニュー/Chigiri/BlendShapeCombiner を選択<br>
-   ![usage-01](https://user-images.githubusercontent.com/61717977/89705645-fe6cfa80-d999-11ea-9cb2-faeecdff5b43.png)
-2. 操作対象のSkinnedMeshRender、合成結果を登録する新しいキー名、合成元の複数シェイプキーの名前を入力して Save As...<br>
-   ![usage-02](https://user-images.githubusercontent.com/61717977/92988188-1fc68680-f504-11ea-9142-ce4bbaaf41ed.png)
-3. 新しいメッシュのファイル名を指定して保存<br>
-   ![usage-03](https://user-images.githubusercontent.com/61717977/92988599-fe679980-f507-11ea-9df8-a3ab7c168848.png)
-4. SkinnedMeshRendererのメッシュを新しいものに差し替え、キーが増えていることを確認<br>
-   ![usage-04](https://user-images.githubusercontent.com/61717977/92988190-205f1d00-f504-11ea-8943-dac1a4711b3f.png)
+1. シーンにモデルを配置してください。
+2. 「メニュー/Chigiri/Create BlendShapeCombiner」を選択すると、ヒエラルキーのトップレベルに BlendShapeCombiner が配置されます。
+3. BlendShapeCombiner の `Target` に、操作対象となる SkinnedMeshRenderer（アバターの表情に適用する場合、一般的には Body オブジェクト）を指定してください。<br>
+   このとき、対象にアタッチされているメッシュが `Source Mesh` に自動的にセットされます。
+   
+   ![usage-01](https://user-images.githubusercontent.com/61717977/93739727-edafd580-fc23-11ea-983d-fd2c7836ebad.png)
+4. `Name` に作成するシェイプキーの名前を入力し、`Source [X]` から合成元のシェイプキーを選択してください。
+   
+   - スケール係数（プルダウンの右にあるテキストボックスの数値）を `1` 以外にすることで、効果のかかり具合を調整することができます（後述の[スケール係数について](#スケール係数について)を参照）。
+   - 合成元となるシェイプキーの数を増減するには、各 `Source [X]` の左にあるゴミ箱アイコンや左最下部にある `+` ボタンを押してください。
+   - 作成するシェイプキー自体を増減するには、`New Keys` リストタブの右下にある `+` `-` を押してください（削除する際は事前に対象行を選択してください）。
+   
+   ![usage-02](https://user-images.githubusercontent.com/61717977/93739733-f2748980-fc23-11ea-9ff2-d3abe91057e0.png)
+5. `Process And Save As...` ボタンを押して、生成された新しいメッシュを保存してください。
+   
+   ![usage-03](https://user-images.githubusercontent.com/61717977/93739737-f4d6e380-fc23-11ea-9118-d287db6226ec.png)
 
-## Tips
+   保存が完了すると、`Target` の SkinnedMeshRenderer に新しいメッシュがアタッチされます。
+   この差し替えられたメッシュに追加されている新しいシェイプキーの値を変更してみて、期待どおりの効果がかかることを確認してください。
+   
+   ![usage-04](https://user-images.githubusercontent.com/61717977/93739742-f7393d80-fc23-11ea-8686-1493f870986c.png)
 
-`scale` に `1` 以外を指定することで、シェイプキーのかかり具合を極端にしたり、逆方向にすることができます。
+## スケール係数について
+
+スケール係数に `1` 以外を指定することで、シェイプキーのかかり具合を極端にしたり、逆方向にすることができます。
 
 たとえば、瞳を小さくするシェイプキーの `scale` に `-1` を指定することで、瞳を大きくするシェイプキーを作成することができます。
 
@@ -46,7 +59,21 @@ Unity 2018.4 以降
 
 他にも、たとえば「A:目を閉じる」と「B:目を閉じて口を開く」しかシェイプキーがないモデルに対して、Aの -1 スケール化シェイプキーをBに重ねがけすることで、口だけを開いた表情を作ることができるようになります。
 
-## 備考
+## ライセンス
 
-- [unity3d-jp/BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder) から一部コードを借用しています（[MIT License](https://github.com/unity3d-jp/BlendShapeBuilder/blob/master/LICENSE.txt)）。
-- 本パッケージのライセンスも [MIT License](./LICENSE) です。
+[MIT License](./LICENSE)
+
+## 更新履歴
+
+- v1.2.0
+  - UIの改善
+    - カスタムUI実装
+    - Source Mesh を Target とは独立して保持し、リトライ時の手間を軽減
+    - 保存ダイアログの初期ディレクトリを Source Mesh と同一に
+    - Revert Target ボタンを追加
+    - ツールチップ表示
+- v1.1.0
+  - スケール係数プロパティを追加
+  - 複数シェイプキーの一括追加に対応
+- v1.0.0
+  - 初回リリース

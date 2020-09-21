@@ -19,7 +19,7 @@ jobs:
       - name: Prepare Build
         run: |
           mkdir build
-          find ./Assets/Chigiri/BlendShapeCombiner -name \*.meta > metaList
+          find Assets -name \*.meta > metaList
 
       - name: create-unitypackage
         uses: pCYSl5EDgo/create-unitypackage@v1
@@ -32,3 +32,11 @@ jobs:
         with:
           name: unitypackage
           path: build/BlendShapeCombiner-${{ env.RELEASE_VERSION }}.unitypackage
+
+      - name: Release
+        uses: fnkr/github-action-ghr@v1
+        if: |
+          !contains(github.ref, '-')
+        env:
+          GHR_PATH: build/BlendShapeCombiner-${{ env.RELEASE_VERSION }}.unitypackage
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
