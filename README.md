@@ -6,6 +6,8 @@
 
 開発経緯としては、VRChat Avatars 3.0 のまばたき用シェイプキーが1つしか指定できない問題への対策が発端ですが、他の用途にも汎用的に用いることができます。
 
+![image](https://repository-images.githubusercontent.com/285993854/facec380-fc27-11ea-9588-d9cd6b608ba7)
+
 ## 動作環境
 
 Unity 2018.4 以降
