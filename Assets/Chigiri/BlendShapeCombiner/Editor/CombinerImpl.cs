@@ -30,7 +30,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             Debug.Log("Asset exported: " + path);
 
             // Targetのメッシュを差し替えてシェイプキーのウェイトを設定
-            Undo.RecordObject(p.targetRenderer, "Process (MeshHoleShrinker)");
+            Undo.RecordObject(p.targetRenderer, "Process (BlendShapeCombiner)");
             p.targetRenderer.sharedMesh = resultMesh;
             // Selection.activeGameObject = self.targetRenderer.gameObject;
         }

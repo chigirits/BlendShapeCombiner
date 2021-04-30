@@ -71,7 +71,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
         {
             get
             {
-                return lineHeight + 2f;
+                return lineHeight + EditorGUIUtility.standardVerticalSpacing;
             }
         }
 
@@ -343,7 +343,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
         void RevertTarget()
         {
-            Undo.RecordObject(self.targetRenderer, "Revert Target (MeshHoleShrinker)");
+            Undo.RecordObject(self.targetRenderer, "Revert Target (BlendShapeCombiner)");
             self.targetRenderer.sharedMesh = self.sourceMesh;
         }
 
