@@ -48,6 +48,11 @@ namespace Chigiri.BlendShapeCombiner.Editor
             get { return serializedObject.FindProperty("sourceMesh"); }
         }
 
+        SerializedProperty useTextField
+        {
+            get { return serializedObject.FindProperty("useTextField"); }
+        }
+
         // Revert Target ボタンを有効にするときtrue
         bool isRevertTargetEnable
         {
@@ -123,15 +128,18 @@ namespace Chigiri.BlendShapeCombiner.Editor
         // SourceKeyDrawer に引き渡すUI関連のパラメータを更新
         void UpdateSourceKeyUIParams()
         {
-            foreach (var newKey in self.newKeys)
+            for (int i = 0; i < self.newKeys.Count; i++)
             {
+                var newKey = self.newKeys[i];
                 for (int j = 0; j < newKey.sourceKeys.Count; j++)
                 {
                     var key = newKey.sourceKeys[j];
                     key._index = j;
-                    key._nameSelector = blendShapes;
+                    key._nameSelector = self.useTextField ? null : blendShapes;
                     key._isDeletable = 2 <= newKey.sourceKeys.Count;
                     key._toBeDeleted = false;
+                    key._useTextField = self.useTextField;
+                    key._isSelected = reorderableList != null && i == reorderableList.index;
                 }
             }
         }
@@ -219,6 +227,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
                 EditorGUILayout.PropertyField(targetRenderer, new GUIContent("Target", "操作対象のSkinnedMeshRenderer"));
                 EditorGUILayout.PropertyField(sourceMesh, new GUIContent("Source Mesh", "オリジナルのメッシュ"));
+                EditorGUILayout.PropertyField(useTextField, new GUIContent("Use Text Field", "シェイプキー選択UIをすべてテキスト入力欄で表示"));
 
                 EditorGUI.BeginDisabledGroup(sourceMesh.objectReferenceValue == null);
                 reorderableList.DoLayoutList();

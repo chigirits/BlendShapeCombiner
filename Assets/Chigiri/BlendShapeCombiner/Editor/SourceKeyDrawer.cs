@@ -15,22 +15,32 @@ namespace Chigiri.BlendShapeCombiner.Editor
             var label = "";
             var tooltip = "合成元となるシェイプキーの名前";
             var name = property.FindPropertyRelative("name");
-            var selector = property.FindPropertyRelative("_nameSelector");
-            if (selector.isArray && 0 < selector.arraySize)
+            var isSelected = property.FindPropertyRelative("_isSelected").boolValue;
+            var useTextField = property.FindPropertyRelative("_useTextField").boolValue;
+            if (!useTextField)
             {
-                var options = new string[selector.arraySize];
-                var selected = -1;
-                for (var i = 0; i < selector.arraySize; i++)
+                if (!isSelected)
                 {
-                    options[i] = selector.GetArrayElementAtIndex(i).stringValue;
-                    if (options[i] == name.stringValue) selected = i;
-                }
-                if (name.stringValue == "") selected = 0;
-                if (0 <= selected)
-                {
-                    selected = EditorGUI.Popup(position, label, selected, options);
-                    name.stringValue = options[selected];
+                    EditorGUI.LabelField(position, new GUIContent(name.stringValue), new GUIContent(label, tooltip));
                     return;
+                }
+                var selector = property.FindPropertyRelative("_nameSelector");
+                if (selector.isArray && 0 < selector.arraySize)
+                {
+                    var options = new string[selector.arraySize];
+                    var selected = -1;
+                    for (var i = 0; i < selector.arraySize; i++)
+                    {
+                        options[i] = selector.GetArrayElementAtIndex(i).stringValue;
+                        if (options[i] == name.stringValue) selected = i;
+                    }
+                    if (name.stringValue == "") selected = 0;
+                    if (0 <= selected)
+                    {
+                        selected = EditorGUI.Popup(position, label, selected, options);
+                        name.stringValue = options[selected];
+                        return;
+                    }
                 }
             }
             EditorGUI.PropertyField(position, name, new GUIContent(label, tooltip));

@@ -15,6 +15,8 @@ namespace Chigiri.BlendShapeCombiner
         public List<string> _nameSelector = new List<string>();
         public bool _isDeletable;
         public bool _toBeDeleted;
+        public bool _useTextField;
+        public bool _isSelected;
     }
 
 }
