@@ -37,8 +37,11 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
         static Mesh MergeBlendShapes(BlendShapeCombiner p)
         {
-            Mesh ret = Object.Instantiate(p.sourceMesh);
-            ret.name = p.sourceMesh.name;
+            var source = p.sourceMesh;
+            var nVertex = source.vertexCount;
+            var nSubMesh = source.subMeshCount;
+            Mesh ret = Object.Instantiate(source);
+            ret.name = source.name;
             var src = Object.Instantiate(ret);
 
             foreach (var newKey in p.newKeys)
@@ -53,22 +56,22 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     if (i == 0 || numFrames < newFrames) newFrames = numFrames;
                 }
 
-                var tempVertices = new Vector3[p.sourceMesh.vertexCount];
-                var tempNormals = new Vector3[p.sourceMesh.vertexCount];
-                var tempTangents = new Vector3[p.sourceMesh.vertexCount];
+                var tempVertices = new Vector3[nVertex];
+                var tempNormals = new Vector3[nVertex];
+                var tempTangents = new Vector3[nVertex];
 
                 for (var frame = 0; frame < newFrames; frame++)
                 {
                     float weight = 0.0f;
-                    var vertices = new Vector3[p.sourceMesh.vertexCount];
-                    var normals = new Vector3[p.sourceMesh.vertexCount];
-                    var tangents = new Vector3[p.sourceMesh.vertexCount];
+                    var vertices = new Vector3[nVertex];
+                    var normals = new Vector3[nVertex];
+                    var tangents = new Vector3[nVertex];
                     for (var i = 0; i < n; i++)
                     {
                         var key = newKey.sourceKeys[i];
                         int index = src.GetBlendShapeIndex(key.name);
                         weight += src.GetBlendShapeFrameWeight(index, frame);
-                        p.sourceMesh.GetBlendShapeFrameVertices(index, frame, tempVertices, tempNormals, tempTangents);
+                        source.GetBlendShapeFrameVertices(index, frame, tempVertices, tempNormals, tempTangents);
                         vertices = Helper.AddVector3(vertices, tempVertices, key.scale);
                         normals = Helper.AddVector3(normals, tempNormals, key.scale);
                         tangents = Helper.AddVector3(tangents, tempTangents, key.scale);
