@@ -43,6 +43,36 @@ namespace Chigiri.BlendShapeCombiner.Editor
             Mesh ret = Object.Instantiate(source);
             ret.name = source.name;
             var src = Object.Instantiate(ret);
+            if (p.clearAllExistingKeys)
+            {
+                ret.ClearBlendShapes();
+            }
+            else
+            if (p.overwriteExistingKeys)
+            {
+                ret.ClearBlendShapes();
+                var n = source.blendShapeCount;
+                for (var i = 0; i < n; i++)
+                {
+                    var key = source.GetBlendShapeName(i);
+                    var skip = false;
+                    foreach (var newKey in p.newKeys)
+                    {
+                        if (newKey.name == key) skip = true;
+                    }
+                    if (skip) continue;
+                    int numFrames = source.GetBlendShapeFrameCount(i);
+                    var vertices = new Vector3[nVertex];
+                    var normals = new Vector3[nVertex];
+                    var tangents = new Vector3[nVertex];
+                    for (var frame = 0; frame < numFrames; frame++)
+                    {
+                        source.GetBlendShapeFrameVertices(i, frame, vertices, normals, tangents);
+                        var weight = source.GetBlendShapeFrameWeight(i, frame);
+                        ret.AddBlendShapeFrame(key, weight, vertices, normals, tangents);
+                    }
+                }
+            }
 
             foreach (var newKey in p.newKeys)
             {

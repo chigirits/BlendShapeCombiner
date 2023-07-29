@@ -50,6 +50,16 @@ namespace Chigiri.BlendShapeCombiner.Editor
             get { return serializedObject.FindProperty("sourceMesh"); }
         }
 
+        SerializedProperty overwriteExistingKeys
+        {
+            get { return serializedObject.FindProperty("overwriteExistingKeys"); }
+        }
+
+        SerializedProperty clearAllExistingKeys
+        {
+            get { return serializedObject.FindProperty("clearAllExistingKeys"); }
+        }
+
         SerializedProperty useTextField
         {
             get { return serializedObject.FindProperty("useTextField"); }
@@ -229,6 +239,8 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
                 EditorGUILayout.PropertyField(targetRenderer, new GUIContent("Target", "操作対象のSkinnedMeshRenderer"));
                 EditorGUILayout.PropertyField(sourceMesh, new GUIContent("Source Mesh", "オリジナルのメッシュ"));
+                EditorGUILayout.PropertyField(overwriteExistingKeys, new GUIContent("Overwrite Existing Keys", "既存の同名シェイプキーに上書きする"));
+                EditorGUILayout.PropertyField(clearAllExistingKeys, new GUIContent("Clear All Existing Keys", "既存のシェイプキーをすべて削除する"));
                 EditorGUILayout.PropertyField(useTextField, new GUIContent("Use Text Field", "シェイプキー選択UIをすべてテキスト入力欄で表示"));
 
                 EditorGUI.BeginDisabledGroup(sourceMesh.objectReferenceValue == null);
@@ -323,7 +335,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             {
                 return "Source Mesh を指定してください";
             }
-            if (newKeys.arraySize < 1)
+            if (newKeys.arraySize < 1 && !clearAllExistingKeys.boolValue)
             {
                 return "New Keys を1つ以上指定してください";
             }
@@ -336,7 +348,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 {
                     return $"New Keys [{j}] ({name}) > Name に新しく作成するシェイプキーの名前を指定してください";
                 }
-                if (0 <= self.sourceMesh.GetBlendShapeIndex(name))
+                if (0 <= self.sourceMesh.GetBlendShapeIndex(name) && !(self.overwriteExistingKeys || self.clearAllExistingKeys))
                 {
                     return $"New Keys [{j}] ({name}) > Name に指定されたシェイプキーは定義済みです。新しい名前を指定してください";
                 }
