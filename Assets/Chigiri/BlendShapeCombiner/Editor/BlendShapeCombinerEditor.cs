@@ -260,6 +260,9 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     EditorGUI.BeginDisabledGroup(!isRevertTargetEnable);
                     if (GUILayout.Button(new GUIContent("Revert Target", "Target の SkinnedMeshRenderer にアタッチされていたメッシュを元に戻します。"))) RevertTarget();
                     EditorGUI.EndDisabledGroup();
+
+                    // Capture ボタン
+                    if (GUILayout.Button(new GUIContent("Capture", "Target の SkinnedMeshRenderer に設定されているシェイプキー値を合成して、新しいシェイプキーを作成します。"))) Capture();
                 }
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.Space();
@@ -354,6 +357,26 @@ namespace Chigiri.BlendShapeCombiner.Editor
         {
             Undo.RecordObject(self.targetRenderer, "Revert Target (BlendShapeCombiner)");
             self.targetRenderer.sharedMesh = self.sourceMesh;
+        }
+
+        async void Capture()
+        {
+            Undo.RecordObject(self, "Capture (BlendShapeCombiner)");
+            var mesh = self.targetRenderer.sharedMesh;
+            var n = mesh.blendShapeCount;
+            var newKey = new NewKey{};
+            newKey.name = "captured_key";
+            for (var i=0; i<n; i++)
+            {
+                var weight = self.targetRenderer.GetBlendShapeWeight(i);
+                if (weight == 0) continue;
+                newKey.sourceKeys.Add(new SourceKey{
+                    name = mesh.GetBlendShapeName(i),
+                    scale = weight * 0.01f,
+                });
+            }
+            self.newKeys.Add(newKey);
+            UpdateSourceKeyUIParams();
         }
 
     }
