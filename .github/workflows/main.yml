@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Setenv
         run: |
-          echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/})"
+          echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/})" >> $GITHUB_ENV
 
       - name: Checkout
         uses: actions/checkout@v2
