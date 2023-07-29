@@ -263,6 +263,9 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
                     // Capture ボタン
                     if (GUILayout.Button(new GUIContent("Capture", "Target の SkinnedMeshRenderer に設定されているシェイプキー値を合成して、新しいシェイプキーを作成します。"))) Capture();
+
+                    // Extract ボタン
+                    if (GUILayout.Button(new GUIContent("Extract", "選択中の新しいシェイプキーが含む元のシェイプキーの値を、Target の SkinnedMeshRenderer に書き戻します。"))) Extract();
                 }
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.Space();
@@ -377,6 +380,18 @@ namespace Chigiri.BlendShapeCombiner.Editor
             }
             self.newKeys.Add(newKey);
             UpdateSourceKeyUIParams();
+        }
+
+        async void Extract()
+        {
+            Undo.RecordObject(self.targetRenderer, "Extract (BlendShapeCombiner)");
+            var mesh = self.targetRenderer.sharedMesh;
+            var newKey = self.newKeys[reorderableList.index];
+            foreach (var sourceKey in newKey.sourceKeys)
+            {
+                var i = mesh.GetBlendShapeIndex(sourceKey.name);
+                self.targetRenderer.SetBlendShapeWeight(i, sourceKey.scale * 100f);
+            }
         }
 
     }
