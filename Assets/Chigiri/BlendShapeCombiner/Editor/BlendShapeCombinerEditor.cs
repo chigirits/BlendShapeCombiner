@@ -60,6 +60,16 @@ namespace Chigiri.BlendShapeCombiner.Editor
             get { return serializedObject.FindProperty("clearAllExistingKeys"); }
         }
 
+        SerializedProperty clearNormal
+        {
+            get { return serializedObject.FindProperty("clearNormal"); }
+        }
+
+        SerializedProperty clearTangent
+        {
+            get { return serializedObject.FindProperty("clearTangent"); }
+        }
+
         SerializedProperty useTextField
         {
             get { return serializedObject.FindProperty("useTextField"); }
@@ -241,6 +251,8 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 EditorGUILayout.PropertyField(sourceMesh, new GUIContent("Source Mesh", "オリジナルのメッシュ"));
                 EditorGUILayout.PropertyField(overwriteExistingKeys, new GUIContent("Overwrite Existing Keys", "既存の同名シェイプキーに上書きする"));
                 EditorGUILayout.PropertyField(clearAllExistingKeys, new GUIContent("Clear All Existing Keys", "既存のシェイプキーをすべて削除する"));
+                EditorGUILayout.PropertyField(clearNormal, new GUIContent("Clear Normal", "法線をクリアする"));
+                EditorGUILayout.PropertyField(clearTangent, new GUIContent("Clear Tangent", "タンジェントをクリアする"));
                 EditorGUILayout.PropertyField(useTextField, new GUIContent("Use Text Field", "シェイプキー選択UIをすべてテキスト入力欄で表示"));
 
                 EditorGUI.BeginDisabledGroup(sourceMesh.objectReferenceValue == null);
@@ -335,7 +347,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             {
                 return "Source Mesh を指定してください";
             }
-            if (newKeys.arraySize < 1 && !clearAllExistingKeys.boolValue)
+            if (newKeys.arraySize < 1 && !(clearAllExistingKeys.boolValue || clearNormal.boolValue || clearTangent.boolValue))
             {
                 return "New Keys を1つ以上指定してください";
             }

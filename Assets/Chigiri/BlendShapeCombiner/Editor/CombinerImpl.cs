@@ -64,10 +64,12 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     int numFrames = source.GetBlendShapeFrameCount(i);
                     var vertices = new Vector3[nVertex];
                     var normals = new Vector3[nVertex];
+                    var normalsSetTo = p.clearNormal ? new Vector3[nVertex] : normals;
                     var tangents = new Vector3[nVertex];
+                    var tangentsSetTo = p.clearTangent ? new Vector3[nVertex] : tangents;
                     for (var frame = 0; frame < numFrames; frame++)
                     {
-                        source.GetBlendShapeFrameVertices(i, frame, vertices, normals, tangents);
+                        source.GetBlendShapeFrameVertices(i, frame, vertices, normalsSetTo, tangentsSetTo);
                         var weight = source.GetBlendShapeFrameWeight(i, frame);
                         ret.AddBlendShapeFrame(key, weight, vertices, normals, tangents);
                     }
@@ -103,8 +105,8 @@ namespace Chigiri.BlendShapeCombiner.Editor
                         weight += src.GetBlendShapeFrameWeight(index, frame);
                         source.GetBlendShapeFrameVertices(index, frame, tempVertices, tempNormals, tempTangents);
                         vertices = Helper.AddVector3(vertices, tempVertices, key.scale);
-                        normals = Helper.AddVector3(normals, tempNormals, key.scale);
-                        tangents = Helper.AddVector3(tangents, tempTangents, key.scale);
+                        if (!p.clearNormal) normals = Helper.AddVector3(normals, tempNormals, key.scale);
+                        if (!p.clearTangent) tangents = Helper.AddVector3(tangents, tempTangents, key.scale);
                     }
                     ret.AddBlendShapeFrame(newKey.name, weight/n, vertices, normals, tangents);
                 }
