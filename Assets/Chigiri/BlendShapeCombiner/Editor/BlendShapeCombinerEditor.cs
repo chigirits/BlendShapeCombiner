@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEditorInternal;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Chigiri.BlendShapeCombiner.Editor
 {
@@ -266,6 +267,9 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
                     // Extract ボタン
                     if (GUILayout.Button(new GUIContent("Extract", "選択中の新しいシェイプキーが含む元のシェイプキーの値を、Target の SkinnedMeshRenderer に書き戻します。"))) Extract();
+
+                    // Sort Sources ボタン
+                    if (GUILayout.Button(new GUIContent("Sort Sources", "すべての Source を名前順にソートします。"))) SortSources();
                 }
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.Space();
@@ -391,6 +395,14 @@ namespace Chigiri.BlendShapeCombiner.Editor
             {
                 var i = mesh.GetBlendShapeIndex(sourceKey.name);
                 self.targetRenderer.SetBlendShapeWeight(i, sourceKey.scale * 100f);
+            }
+        }
+
+        void SortSources()
+        {
+            foreach (var newKey in self.newKeys)
+            {
+                newKey.sourceKeys = newKey.sourceKeys.OrderBy(x => x.name).ToList();
             }
         }
 
