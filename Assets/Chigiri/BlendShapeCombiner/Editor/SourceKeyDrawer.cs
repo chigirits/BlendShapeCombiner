@@ -50,12 +50,15 @@ namespace Chigiri.BlendShapeCombiner.Editor
         {
             var orgLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 0;
-            var rects = Helper.SplitRect(position, false, 16f, 80f, -1f, 16f, 40f);
+            var rects = Helper.SplitRect(position, false, 16f, 80f, -1f, 40f, 16f, 40f);
             var r = 0;
             var style = new GUIStyle {
                 margin = new RectOffset(0, 0, 0, 0),
                 padding = new RectOffset(0, 0, 0, 0)
             };
+            var numStyle = EditorStyles.numberField;
+            numStyle.margin = new RectOffset { };
+            numStyle.padding = new RectOffset { };
             var index = property.FindPropertyRelative("_index");
 
             var isDeletable = property.FindPropertyRelative("_isDeletable").boolValue;
@@ -70,13 +73,13 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
             DrawNameSelector(rects[r++], property);
 
+            var xSignBounds = property.FindPropertyRelative("xSignBounds");
+            xSignBounds.intValue = EditorGUI.Popup(rects[r++], "", xSignBounds.intValue+1, new string[]{"L","LR","R"}) - 1;
+
             EditorGUI.LabelField(rects[r++], "", " x", style);
 
             var scale = property.FindPropertyRelative("scale");
-            var s = EditorStyles.numberField;
-            s.margin = new RectOffset { };
-            s.padding = new RectOffset { };
-            scale.floatValue = EditorGUI.FloatField(rects[r++], scale.floatValue, s);
+            scale.floatValue = EditorGUI.FloatField(rects[r++], scale.floatValue, numStyle);
 
             EditorGUIUtility.labelWidth = orgLabelWidth;
         }
