@@ -12,6 +12,11 @@ namespace Chigiri.BlendShapeCombiner
 
         public SkinnedMeshRenderer targetRenderer;
         public Mesh sourceMesh;
+        public bool overwriteExistingKeys;
+        public bool clearAllExistingKeys;
+        public bool clearNormal;
+        public bool clearTangent;
+        public bool useTextField;
         public List<NewKey> newKeys = new List<NewKey>{};
 
     }
