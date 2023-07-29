@@ -13,6 +13,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
         ReorderableList reorderableList;
         List<string> blendShapes;
+        string validationError;
 
         [MenuItem("Chigiri/Create BlendShapeCombiner")]
         public static void CreateBlendShapeCombiner()
@@ -193,8 +194,8 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 newKeys.DeleteArrayElementAtIndex(list.index);
                 if (newKeys.arraySize <= list.index) list.index--;
             };
-            reorderableList.onReorderCallback = list => Debug.Log("onReorder");
-            reorderableList.onSelectCallback = list => Debug.Log("onSelect");
+            reorderableList.onReorderCallback = list => UpdateSourceKeyUIParams();
+            reorderableList.onSelectCallback = list => UpdateSourceKeyUIParams();
         }
 
         public override void OnInspectorGUI()
@@ -235,10 +236,9 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 EditorGUI.EndDisabledGroup();
 
                 // エラー表示
-                var error = Validate();
-                if (error != "")
+                if (validationError != "")
                 {
-                    EditorGUILayout.HelpBox(Helper.Chomp(error), MessageType.Error, true);
+                    EditorGUILayout.HelpBox(validationError, MessageType.Error, true);
                 }
 
                 // Revert Target に関する注意
@@ -250,7 +250,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 EditorGUILayout.BeginHorizontal();
                 {
                     // Process And Save As... ボタン
-                    EditorGUI.BeginDisabledGroup(error != "");
+                    EditorGUI.BeginDisabledGroup(validationError != "");
                     if (GUILayout.Button(new GUIContent("Process And Save As...", "新しいメッシュを生成し、保存ダイアログを表示します。")))
                     {
                         CombinerImpl.Process(self);
@@ -279,6 +279,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             {
                 // 何らかの操作があったときに必要な処理
                 UpdateSourceKeyUIParams();
+                validationError = Helper.Chomp(Validate());
             }
 
             // Target を変更したときに Source Mesh が空なら自動設定
@@ -306,6 +307,12 @@ namespace Chigiri.BlendShapeCombiner.Editor
             }
         }
 
+        public void Awake()
+        {
+            UpdateSourceKeyUIParams();
+            validationError = Helper.Chomp(Validate());
+        }
+
         string Validate()
         {
             if (targetRenderer.objectReferenceValue == null)
@@ -327,21 +334,21 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 var name = newKey.FindPropertyRelative("name").stringValue;
                 if (name == "")
                 {
-                    return $"New Keys [{j}] > Name に新しく作成するシェイプキーの名前を指定してください";
+                    return $"New Keys [{j}] ({name}) > Name に新しく作成するシェイプキーの名前を指定してください";
                 }
                 if (0 <= self.sourceMesh.GetBlendShapeIndex(name))
                 {
-                    return $"New Keys [{j}] > Name に指定されたシェイプキーは定義済みです。新しい名前を指定してください";
+                    return $"New Keys [{j}] ({name}) > Name に指定されたシェイプキーは定義済みです。新しい名前を指定してください";
                 }
                 if (names.ContainsKey(name))
                 {
-                    return $"New Keys [{j}] > Name に指定された名前は重複しています。異なる名前を指定してください";
+                    return $"New Keys [{j}] ({name}) > Name に指定された名前は重複しています。異なる名前を指定してください";
                 }
                 names[name] = true;
                 var sourceKeys = newKey.FindPropertyRelative("sourceKeys");
                 if (sourceKeys.arraySize < 1)
                 {
-                    return $"New Keys [{j}] の + ボタンを押してください";
+                    return $"New Keys [{j}] ({name}) の + ボタンを押してください";
                 }
                 for (var i = 0; i < sourceKeys.arraySize; i++)
                 {
@@ -349,11 +356,11 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     var n = key.FindPropertyRelative("name").stringValue;
                     if (n == "")
                     {
-                        return $"New Keys [{j}] > Source Key [{i}] にコピー元シェイプキーを指定してください";
+                        return $"New Keys [{j}] ({name}) > Source Key [{i}] にコピー元シェイプキーを指定してください";
                     }
                     if (self.sourceMesh.GetBlendShapeIndex(n) < 0)
                     {
-                        return $"New Keys [{j}] > Source Key [{i}] に指定されたシェイプキーは存在しません";
+                        return $"New Keys [{j}] ({name}) > Source Key [{i}] に指定されたシェイプキー ({n}) は存在しません";
                     }
                 }
             }
