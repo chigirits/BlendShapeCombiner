@@ -50,7 +50,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
         {
             var orgLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 0;
-            var rects = Helper.SplitRect(position, false, 16f, 80f, -1f, 40f, 16f, 40f);
+            var rects = Helper.SplitRect(position, false, 16f, -1f, 40f, 16f, 40f);
             var r = 0;
             var style = new GUIStyle {
                 margin = new RectOffset(0, 0, 0, 0),
@@ -61,15 +61,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             numStyle.padding = new RectOffset { };
             var index = property.FindPropertyRelative("_index");
 
-            var isDeletable = property.FindPropertyRelative("_isDeletable").boolValue;
-            EditorGUI.BeginDisabledGroup(!isDeletable);
-            if (GUI.Button(rects[r++], EditorGUIUtility.TrIconContent("TreeEditor.Trash"), "RL FooterButton"))
-            {
-                property.FindPropertyRelative("_toBeDeleted").boolValue = true;
-            }
-            EditorGUI.EndDisabledGroup();
-
-            EditorGUI.LabelField(rects[r++], "", $"Source [{index.intValue}]", style);
+            EditorGUI.LabelField(rects[r++], "", $"{index.intValue}", style);
 
             DrawNameSelector(rects[r++], property);
 
