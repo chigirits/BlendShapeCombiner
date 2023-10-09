@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,8 +12,9 @@ namespace Chigiri.BlendShapeCombiner.Editor
     public class BlendShapeCombinerEditor : UnityEditor.Editor
     {
 
-        ReorderableList reorderableList;
-        List<string> blendShapes;
+        ReorderableList newKeysList;
+        ReorderableList sourceKeysList;
+        int newKeyIndexOfCurrentSourceKeysList = -1;
         string validationError;
 
         [MenuItem("Chigiri/Create BlendShapeCombiner")]
@@ -75,6 +77,11 @@ namespace Chigiri.BlendShapeCombiner.Editor
             get { return serializedObject.FindProperty("useTextField"); }
         }
 
+        SerializedProperty usePercentage
+        {
+            get { return serializedObject.FindProperty("usePercentage"); }
+        }
+
         // Revert Target ボタンを有効にするときtrue
         bool isRevertTargetEnable
         {
@@ -102,92 +109,44 @@ namespace Chigiri.BlendShapeCombiner.Editor
             }
         }
 
-        // リスト要素の高さ
-        float ElementHeightCallback(int i)
+        float NewKeyHeightCallback(int i)
         {
-            var newKey = newKeys.GetArrayElementAtIndex(i);
-            var n = newKey.FindPropertyRelative("sourceKeys").arraySize;
-            return linePitch * (2 + n);
+            return linePitch;
         }
 
-        // リスト要素を描画
-        void DrawElementCallback(Rect rect, int i, bool isActive, bool isFocused)
+        void DrawNewKeyCallback(Rect rect, int i, bool isActive, bool isFocused)
         {
-            var orgLabelWidth = EditorGUIUtility.labelWidth;
-
             var newKey = newKeys.GetArrayElementAtIndex(i);
-            var sourceKeys = newKey.FindPropertyRelative("sourceKeys");
-            var r = new Rect(rect.x, rect.y, rect.width, lineHeight);
-
-            // 各フィールドを描画
-            EditorGUIUtility.labelWidth = 50f;
-            EditorGUI.PropertyField(r, newKey.FindPropertyRelative("name"), new GUIContent("Name", "新しく作成するシェイプキーの名前"));
-            r.y += linePitch;
-            for (int j = 0; j < sourceKeys.arraySize; j++)
-            {
-                var sourceKey = sourceKeys.GetArrayElementAtIndex(j);
-                EditorGUI.PropertyField(r, sourceKey);
-                r.y += linePitch;
-            }
-            r.width = lineHeight;
-
-            // + が押されたら Source Key を追加
-            if (GUI.Button(r, EditorGUIUtility.TrIconContent("Toolbar Plus"), "RL FooterButton"))
-            {
-                sourceKeys.InsertArrayElementAtIndex(sourceKeys.arraySize);
-            }
-
-            // 削除ボタンが押された Source Key を削除
-            for (int j = sourceKeys.arraySize - 1; 0 <= j; j--)
-            {
-                var toBeDeleted = sourceKeys.GetArrayElementAtIndex(j).FindPropertyRelative("_toBeDeleted");
-                if (toBeDeleted.boolValue) sourceKeys.DeleteArrayElementAtIndex(j);
-            }
-
-            EditorGUIUtility.labelWidth = orgLabelWidth;
+            EditorGUI.LabelField(rect, new GUIContent(newKey.FindPropertyRelative("name").stringValue));
         }
 
         // SourceKeyDrawer に引き渡すUI関連のパラメータを更新
         void UpdateSourceKeyUIParams()
         {
-            for (int i = 0; i < self.newKeys.Count; i++)
-            {
-                var newKey = self.newKeys[i];
-                for (int j = 0; j < newKey.sourceKeys.Count; j++)
-                {
-                    var key = newKey.sourceKeys[j];
-                    key._index = j;
-                    key._nameSelector = self.useTextField ? null : blendShapes;
-                    key._isDeletable = 2 <= newKey.sourceKeys.Count;
-                    key._toBeDeleted = false;
-                    key._useTextField = self.useTextField;
-                    key._isSelected = reorderableList != null && i == reorderableList.index;
-                }
-            }
+            // for (int i = 0; i < self.newKeys.Length; i++)
+            // {
+            //     var newKey = self.newKeys[i];
+            //     for (int j = 0; j < newKey.sourceKeys.Length; j++)
+            //     {
+            //         var key = newKey.sourceKeys[j];
+            //     }
+            // }
         }
 
-        // リスト描画の準備
-        void PrepareReordableList()
+        void PrepareNewKeysList()
         {
-            if (reorderableList != null) return;
+            if (newKeysList != null) return;
 
-            reorderableList = new ReorderableList(
-                elements: self.newKeys,
-                elementType: typeof(NewKey),
-                draggable: true,
-                displayHeader: true,
-                displayAddButton: true,
-                displayRemoveButton: true
-            );
+            newKeysList = new ReorderableList(serializedObject, newKeys);
 
             // reorderableList.drawElementBackgroundCallback = (Rect rect, int i, bool isActive, bool isFocused) => { };
 
-            reorderableList.drawElementCallback = DrawElementCallback;
+            newKeysList.drawElementCallback = DrawNewKeyCallback;
 
             // reorderableList.drawFooterCallback = rect => { };
-            reorderableList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "New Keys");
-            reorderableList.elementHeightCallback = ElementHeightCallback;
-            reorderableList.onAddCallback = list =>
+            newKeysList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "New Keys");
+            newKeysList.elementHeightCallback = NewKeyHeightCallback;
+            newKeysList.onAddCallback = list =>
             {
                 // New Key を追加
                 var n = newKeys.arraySize;
@@ -200,37 +159,100 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 {
                     sourceKeys.InsertArrayElementAtIndex(0);
                     var sourceKey = sourceKeys.GetArrayElementAtIndex(0);
-                    sourceKey.FindPropertyRelative("scale").floatValue = 1f;
+                    sourceKey.FindPropertyRelative("scale").doubleValue = 1.0;
                     sourceKeys.InsertArrayElementAtIndex(1);
                 }
             };
-            // reorderableList.onAddDropdownCallback = (rect, list) => Debug.Log("onAddDropdown");
-            // reorderableList.onCanAddCallback = list => true;
-            // reorderableList.onCanRemoveCallback = list => true;
-            // reorderableList.onChangedCallback = list => Debug.Log("onChanged");
-            // reorderableList.onMouseUpCallback = list => { };
-            reorderableList.onRemoveCallback = list =>
+            // newKeysList.onAddDropdownCallback = (rect, list) => Debug.Log("onAddDropdown");
+            // newKeysList.onCanAddCallback = list => true;
+            // newKeysList.onCanRemoveCallback = list => 1 <= newKeys.arraySize;
+            // newKeysList.onChangedCallback = list => Debug.Log("onChanged");
+            // newKeysList.onMouseUpCallback = list => { };
+            newKeysList.onRemoveCallback = list =>
             {
                 newKeys.DeleteArrayElementAtIndex(list.index);
                 if (newKeys.arraySize <= list.index) list.index--;
             };
-            reorderableList.onReorderCallback = list => UpdateSourceKeyUIParams();
-            reorderableList.onSelectCallback = list => UpdateSourceKeyUIParams();
+            newKeysList.onReorderCallback = list => UpdateSourceKeyUIParams();
+            newKeysList.onSelectCallback = list => UpdateSourceKeyUIParams();
+        }
+
+        float SourceKeyHeightCallback(int i)
+        {
+            return linePitch;
+        }
+
+        void DrawSourceKeyCallback(Rect rect, int i, bool isActive, bool isFocused)
+        {
+            var newKey = newKeys.GetArrayElementAtIndex(newKeyIndexOfCurrentSourceKeysList);
+            var sourceKeys = newKey.FindPropertyRelative("sourceKeys");
+            var sourceKey = sourceKeys.GetArrayElementAtIndex(i);
+            EditorGUI.PropertyField(rect, sourceKey);
+        }
+
+        void PrepareSourceKeysList(int newKeyIndex)
+        {
+            if (newKeyIndex != newKeyIndexOfCurrentSourceKeysList)
+            {
+                sourceKeysList = null;
+                newKeyIndexOfCurrentSourceKeysList = newKeyIndex;
+            }
+            if (sourceKeysList != null) return;
+
+            var newKey = newKeys.GetArrayElementAtIndex(newKeyIndex);
+            var sourceKeys = newKey.FindPropertyRelative("sourceKeys");
+            sourceKeysList = new ReorderableList(sourceKeys.serializedObject, sourceKeys);
+
+            // reorderableList.drawElementBackgroundCallback = (Rect rect, int i, bool isActive, bool isFocused) => { };
+
+            sourceKeysList.drawElementCallback = DrawSourceKeyCallback;
+
+            // reorderableList.drawFooterCallback = rect => { };
+            sourceKeysList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Source Keys");
+            sourceKeysList.elementHeightCallback = SourceKeyHeightCallback;
+            sourceKeysList.onAddCallback = list =>
+            {
+                // Source Key を追加
+                var n = sourceKeys.arraySize;
+                sourceKeys.InsertArrayElementAtIndex(n);
+                // var sourceKey = sourceKeys.GetArrayElementAtIndex(n);
+                // var name = sourceKey.FindPropertyRelative("name");
+                // if (name.stringValue == "") name.stringValue = "source_key";
+                // sourceKey.FindPropertyRelative("scale").doubleValue = 1.0;
+                // sourceKey.FindPropertyRelative("xSignBounds").intValue = 0;
+            };
+            // sourceKeysList.onAddDropdownCallback = (rect, list) => Debug.Log("onAddDropdown");
+            // sourceKeysList.onCanAddCallback = list => true;
+            // sourceKeysList.onCanRemoveCallback = list => 1 <= sourceKeys.arraySize;
+            // sourceKeysList.onChangedCallback = list => Debug.Log("onChanged");
+            // sourceKeysList.onMouseUpCallback = list => { };
+            sourceKeysList.onRemoveCallback = list =>
+            {
+                sourceKeys.DeleteArrayElementAtIndex(list.index);
+                if (sourceKeys.arraySize <= list.index) list.index--;
+            };
+            sourceKeysList.onReorderCallback = list => UpdateSourceKeyUIParams();
+            sourceKeysList.onSelectCallback = list => UpdateSourceKeyUIParams();
+        }
+
+        void RecollectShapeKeys()
+        {
+            if (self.sourceMesh == null)
+            {
+                self._shapeKeys = new string[0];
+                return;
+            }
+            var n = self.sourceMesh.blendShapeCount;
+            self._shapeKeys = new string[n];
+            for (var i = 0; i < n; i++) self._shapeKeys[i] = self.sourceMesh.GetBlendShapeName(i);
         }
 
         public override void OnInspectorGUI()
         {
             // ブレンドシェイプの選択肢を収集
-            if (blendShapes == null)
+            if (self._shapeKeys == null)
             {
-                blendShapes = new List<string>();
-                if (self.sourceMesh != null)
-                {
-                    for (var i = 0; i < self.sourceMesh.blendShapeCount; i++)
-                    {
-                        blendShapes.Add(self.sourceMesh.GetBlendShapeName(i));
-                    }
-                }
+                RecollectShapeKeys();
                 UpdateSourceKeyUIParams();
             }
 
@@ -240,10 +262,10 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
             // 描画
             serializedObject.Update();
-            EditorGUI.BeginChangeCheck();
+            using (var check = new EditorGUI.ChangeCheckScope())
             {
                 // リスト描画の準備
-                PrepareReordableList();
+                PrepareNewKeysList();
 
                 // UI描画
 
@@ -254,10 +276,30 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 EditorGUILayout.PropertyField(clearNormal, new GUIContent("Clear Normal", "法線をクリアする"));
                 EditorGUILayout.PropertyField(clearTangent, new GUIContent("Clear Tangent", "タンジェントをクリアする"));
                 EditorGUILayout.PropertyField(useTextField, new GUIContent("Use Text Field", "シェイプキー選択UIをすべてテキスト入力欄で表示"));
+                EditorGUILayout.PropertyField(usePercentage, new GUIContent("Use Percentage", "スケール係数を百分率で指定"));
 
-                EditorGUI.BeginDisabledGroup(sourceMesh.objectReferenceValue == null);
-                reorderableList.DoLayoutList();
-                EditorGUI.EndDisabledGroup();
+                using (new EditorGUI.DisabledGroupScope(sourceMesh.objectReferenceValue == null))
+                {
+                    if (newKeysList != null) newKeysList.DoLayoutList();
+                }
+
+                // 選択中の NewKey
+                if (newKeysList != null && 0 <= newKeysList.index)
+                {
+                    EditorGUILayout.LabelField("Detail of selected New Key:");
+                    var box = new GUIStyle(GUI.skin.window);
+                    box.padding = new RectOffset(15, 15, 10, 10);
+                    using (new EditorGUILayout.VerticalScope(box))
+                    {
+                        var i = newKeysList.index;
+                        var newKey = newKeys.GetArrayElementAtIndex(i);
+                        var sourceKeys = newKey.FindPropertyRelative("sourceKeys");
+                        PrepareSourceKeysList(i);
+
+                        EditorGUILayout.PropertyField(newKey.FindPropertyRelative("name"), new GUIContent("Name", "新しく作成するシェイプキーの名前"));
+                        if (sourceKeysList != null) sourceKeysList.DoLayoutList();
+                    }
+                }
 
                 // エラー表示
                 if (validationError != "")
@@ -271,39 +313,66 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     EditorGUILayout.HelpBox("Undo 時にメッシュが消えた場合は Revert Target ボタンを押してください。", MessageType.Info, true);
                 }
 
-                EditorGUILayout.BeginHorizontal();
+                using (new EditorGUILayout.HorizontalScope())
                 {
                     // Process And Save As... ボタン
-                    EditorGUI.BeginDisabledGroup(validationError != "");
-                    if (GUILayout.Button(new GUIContent("Process And Save As...", "新しいメッシュを生成し、保存ダイアログを表示します。")))
+                    using (new EditorGUI.DisabledGroupScope(validationError != ""))
                     {
-                        CombinerImpl.Process(self);
+                        if (GUILayout.Button(new GUIContent("Process And Save As...", "新しいメッシュを生成し、保存ダイアログを表示します。")))
+                        {
+                            CombinerImpl.Process(self);
+                        }
                     }
-                    EditorGUI.EndDisabledGroup();
 
                     // Revert Target ボタン
-                    EditorGUI.BeginDisabledGroup(!isRevertTargetEnable);
-                    if (GUILayout.Button(new GUIContent("Revert Target", "Target の SkinnedMeshRenderer にアタッチされていたメッシュを元に戻します。"))) RevertTarget();
-                    EditorGUI.EndDisabledGroup();
+                    using (new EditorGUI.DisabledGroupScope(!isRevertTargetEnable))
+                    {
+                        if (GUILayout.Button(new GUIContent("Revert Target", "Target の SkinnedMeshRenderer にアタッチされていたメッシュを元に戻します。"))) RevertTarget();
+                    }
+                }
 
+                using (new EditorGUILayout.HorizontalScope())
+                {
                     // Capture ボタン
-                    if (GUILayout.Button(new GUIContent("Capture", "Target の SkinnedMeshRenderer に設定されているシェイプキー値を合成して、新しいシェイプキーを作成します。"))) Capture();
+                    using (new EditorGUI.DisabledGroupScope(targetRenderer.objectReferenceValue == null))
+                    {
+                        if (GUILayout.Button(new GUIContent("Capture", "Target の SkinnedMeshRenderer に設定されているシェイプキー値を合成して、新しいシェイプキーを作成します。"))) Capture();
+                    }
 
                     // Extract ボタン
-                    if (GUILayout.Button(new GUIContent("Extract", "選択中の新しいシェイプキーが含む元のシェイプキーの値を、Target の SkinnedMeshRenderer に書き戻します。"))) Extract();
+                    using (new EditorGUI.DisabledGroupScope(targetRenderer.objectReferenceValue == null || newKeysList.index < 0))
+                    {
+                        if (GUILayout.Button(new GUIContent("Extract", "選択中の新しいシェイプキーが含む元のシェイプキーの値を、Target の SkinnedMeshRenderer に書き戻します。"))) Extract();
+                    }
 
                     // Sort Sources ボタン
-                    if (GUILayout.Button(new GUIContent("Sort Sources", "すべての Source を名前順にソートします。"))) SortSources();
+                    using (new EditorGUI.DisabledGroupScope(newKeysList.index < 0))
+                    {
+                        if (GUILayout.Button(new GUIContent("Sort Sources", "選択中の新しいシェイプキーの Source を名前順にソートします。"))) SortSources();
+                    }
                 }
-                EditorGUILayout.EndHorizontal();
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    using (new EditorGUI.DisabledGroupScope(newKeysList.index < 0))
+                    {
+                        var p = usePercentage.boolValue;
+                        var p3 = p ? "12.3%" : "0.123";
+                        var p2 = p ? "12%" : "0.12";
+                        if (GUILayout.Button(new GUIContent($"Round Scale (like {p3})", "選択中の新しいシェイプキーのスケール係数を、小数第3位（百分率で第1位）までになるよう四捨五入します。"))) RoundScale(1000.0);
+                        if (GUILayout.Button(new GUIContent($"Round Scale (like {p2})", "選択中の新しいシェイプキーのスケール係数を、小数第2位（百分率で整数）までになるよう四捨五入します。"))) RoundScale(100.0);
+                    }
+                }
+
                 EditorGUILayout.Space();
-            }
-            serializedObject.ApplyModifiedProperties();
-            if (EditorGUI.EndChangeCheck())
-            {
-                // 何らかの操作があったときに必要な処理
-                UpdateSourceKeyUIParams();
-                validationError = Helper.Chomp(Validate());
+
+                serializedObject.ApplyModifiedProperties();
+                if (check.changed)
+                {
+                    // 何らかの操作があったときに必要な処理
+                    UpdateSourceKeyUIParams();
+                    validationError = Helper.Chomp(Validate());
+                }
             }
 
             // Target を変更したときに Source Mesh が空なら自動設定
@@ -315,24 +384,26 @@ namespace Chigiri.BlendShapeCombiner.Editor
             // Source Mesh を変更したときはブレンドシェイプ一覧を次回更新する
             if (prevSourceMesh != self.sourceMesh)
             {
-                blendShapes = null;
-                if (self.newKeys.Count == 0)
+                self._shapeKeys = null;
+                if (self.newKeys.Length == 0)
                 {
-                    self.newKeys.Add(new NewKey
+                    self.newKeys = new NewKey[1];
+                    self.newKeys[0] = new NewKey
                     {
                         name = "new_key",
-                        sourceKeys = new List<SourceKey>
+                        sourceKeys = new SourceKey[]
                         {
-                            new SourceKey{ scale = 1f },
-                            new SourceKey{ scale = 1f }
-                        }
-                    });
+                            new SourceKey{ scale = 1.0 },
+                            new SourceKey{ scale = 1.0 },
+                        },
+                    };
                 }
             }
         }
 
         public void Awake()
         {
+            RecollectShapeKeys();
             UpdateSourceKeyUIParams();
             validationError = Helper.Chomp(Validate());
         }
@@ -397,43 +468,58 @@ namespace Chigiri.BlendShapeCombiner.Editor
             self.targetRenderer.sharedMesh = self.sourceMesh;
         }
 
-        async void Capture()
+        void Capture()
         {
             Undo.RecordObject(self, "Capture (BlendShapeCombiner)");
             var mesh = self.targetRenderer.sharedMesh;
             var n = mesh.blendShapeCount;
             var newKey = new NewKey{};
             newKey.name = "captured_key";
+            var sourceKeys = new List<SourceKey>();
             for (var i=0; i<n; i++)
             {
                 var weight = self.targetRenderer.GetBlendShapeWeight(i);
                 if (weight == 0) continue;
-                newKey.sourceKeys.Add(new SourceKey{
+                sourceKeys.Add(new SourceKey{
                     name = mesh.GetBlendShapeName(i),
-                    scale = weight * 0.01f,
+                    scale = (double)weight * 0.01,
                 });
             }
-            self.newKeys.Add(newKey);
+            newKey.sourceKeys = sourceKeys.ToArray();
+            self.newKeys = self.newKeys.Append(newKey).ToArray();
             UpdateSourceKeyUIParams();
         }
 
-        async void Extract()
+        void Extract()
         {
+            var i = newKeysList.index;
+            if (i < 0) return;
             Undo.RecordObject(self.targetRenderer, "Extract (BlendShapeCombiner)");
             var mesh = self.targetRenderer.sharedMesh;
-            var newKey = self.newKeys[reorderableList.index];
+            var newKey = self.newKeys[i];
             foreach (var sourceKey in newKey.sourceKeys)
             {
-                var i = mesh.GetBlendShapeIndex(sourceKey.name);
-                self.targetRenderer.SetBlendShapeWeight(i, sourceKey.scale * 100f);
+                var j = mesh.GetBlendShapeIndex(sourceKey.name);
+                self.targetRenderer.SetBlendShapeWeight(j, (float)(sourceKey.scale * 100.0));
             }
         }
 
         void SortSources()
         {
-            foreach (var newKey in self.newKeys)
+            var i = newKeysList.index;
+            if (i < 0) return;
+            var newKey = self.newKeys[i];
+            newKey.sourceKeys = newKey.sourceKeys.OrderBy(x => x.name).ToArray();
+        }
+
+        void RoundScale(double precision)
+        {
+            var i = newKeysList.index;
+            if (i < 0) return;
+            var newKey = self.newKeys[i];
+            foreach (var key in newKey.sourceKeys)
             {
-                newKey.sourceKeys = newKey.sourceKeys.OrderBy(x => x.name).ToList();
+                key.scale = Math.Round(key.scale * precision) / precision;
             }
         }
 

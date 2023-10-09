@@ -80,7 +80,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
             foreach (var newKey in p.newKeys)
             {
-                var n = newKey.sourceKeys.Count;
+                var n = newKey.sourceKeys.Length;
                 var newFrames = 0;
                 for (var i = 0; i < n; i++)
                 {
@@ -105,13 +105,13 @@ namespace Chigiri.BlendShapeCombiner.Editor
                         var key = newKey.sourceKeys[i];
                         int index = src.GetBlendShapeIndex(key.name);
 
-                        var scale = new float[nVertex];
+                        var scale = new double[nVertex];
                         for (var j = 0; j < nVertex; j++)
                         {
                             var v = sourceVertices[j];
                             var xb = key.xSignBounds;
                             var includes = xb==0 || xb<0 && v.x<0 || 0<xb && 0<v.x;
-                            scale[j] = includes ? key.scale : 0f;
+                            scale[j] = includes ? key.scale : 1.0;
                         }
 
                         weight += src.GetBlendShapeFrameWeight(index, frame);

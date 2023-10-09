@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,8 +18,10 @@ namespace Chigiri.BlendShapeCombiner
         public bool clearNormal;
         public bool clearTangent;
         public bool useTextField;
-        public List<NewKey> newKeys = new List<NewKey>{};
+        public bool usePercentage;
+        public NewKey[] newKeys = new NewKey[0];
 
+        [NonSerialized] public string[] _shapeKeys;
     }
 
 }
