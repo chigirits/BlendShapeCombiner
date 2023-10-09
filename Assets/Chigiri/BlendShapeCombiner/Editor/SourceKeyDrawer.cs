@@ -61,9 +61,9 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
             EditorGUI.LabelField(rects[r++], "", " x", style);
 
-            var p = root.usePercentage ? 100f : 1f;
+            var p = root.usePercentage ? 100.0 : 1.0;
             var scale = property.FindPropertyRelative("scale");
-            scale.floatValue = EditorGUI.FloatField(rects[r++], scale.floatValue * p, numStyle) / p;
+            scale.doubleValue = EditorGUI.DoubleField(rects[r++], scale.doubleValue * p, numStyle) / p;
 
             EditorGUIUtility.labelWidth = orgLabelWidth;
         }

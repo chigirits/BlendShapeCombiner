@@ -61,10 +61,10 @@ namespace Chigiri.BlendShapeCombiner.Editor
             return reg.Replace(name, "_");
         }
 
-        public static Vector3[] AddVector3(Vector3[] src0, Vector3[] src1, float[] scale)
+        public static Vector3[] AddVector3(Vector3[] src0, Vector3[] src1, double[] scale)
         {
             var result = new Vector3[src0.Length];
-            for (int i = 0; i < src0.Length; i++) result[i] = src0[i] + src1[i] * scale[i];
+            for (int i = 0; i < src0.Length; i++) result[i] = src0[i] + src1[i] * (float)scale[i];
             return result;
         }
 

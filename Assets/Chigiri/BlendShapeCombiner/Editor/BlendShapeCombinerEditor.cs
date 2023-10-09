@@ -158,7 +158,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 {
                     sourceKeys.InsertArrayElementAtIndex(0);
                     var sourceKey = sourceKeys.GetArrayElementAtIndex(0);
-                    sourceKey.FindPropertyRelative("scale").floatValue = 1f;
+                    sourceKey.FindPropertyRelative("scale").doubleValue = 1.0;
                     sourceKeys.InsertArrayElementAtIndex(1);
                 }
             };
@@ -217,7 +217,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 // var sourceKey = sourceKeys.GetArrayElementAtIndex(n);
                 // var name = sourceKey.FindPropertyRelative("name");
                 // if (name.stringValue == "") name.stringValue = "source_key";
-                // sourceKey.FindPropertyRelative("scale").floatValue = 1f;
+                // sourceKey.FindPropertyRelative("scale").doubleValue = 1.0;
                 // sourceKey.FindPropertyRelative("xSignBounds").intValue = 0;
             };
             // sourceKeysList.onAddDropdownCallback = (rect, list) => Debug.Log("onAddDropdown");
@@ -368,8 +368,8 @@ namespace Chigiri.BlendShapeCombiner.Editor
                         name = "new_key",
                         sourceKeys = new SourceKey[]
                         {
-                            new SourceKey{ scale = 1f },
-                            new SourceKey{ scale = 1f },
+                            new SourceKey{ scale = 1.0 },
+                            new SourceKey{ scale = 1.0 },
                         },
                     };
                 }
@@ -457,7 +457,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 if (weight == 0) continue;
                 sourceKeys.Add(new SourceKey{
                     name = mesh.GetBlendShapeName(i),
-                    scale = weight * 0.01f,
+                    scale = (double)weight * 0.01,
                 });
             }
             newKey.sourceKeys = sourceKeys.ToArray();
@@ -475,7 +475,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             foreach (var sourceKey in newKey.sourceKeys)
             {
                 var j = mesh.GetBlendShapeIndex(sourceKey.name);
-                self.targetRenderer.SetBlendShapeWeight(j, sourceKey.scale * 100f);
+                self.targetRenderer.SetBlendShapeWeight(j, (float)(sourceKey.scale * 100.0));
             }
         }
 

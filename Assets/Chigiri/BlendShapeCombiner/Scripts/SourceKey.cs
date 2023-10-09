@@ -9,7 +9,7 @@ namespace Chigiri.BlendShapeCombiner
     public class SourceKey
     {
         public string name;
-        public float scale = 1.0f;
+        public double scale = 1.0;
         public int xSignBounds = 0;
     }
 
