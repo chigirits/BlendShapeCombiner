@@ -334,10 +334,13 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     // Capture ボタン
-                    if (GUILayout.Button(new GUIContent("Capture", "Target の SkinnedMeshRenderer に設定されているシェイプキー値を合成して、新しいシェイプキーを作成します。"))) Capture();
+                    using (new EditorGUI.DisabledGroupScope(targetRenderer.objectReferenceValue == null))
+                    {
+                        if (GUILayout.Button(new GUIContent("Capture", "Target の SkinnedMeshRenderer に設定されているシェイプキー値を合成して、新しいシェイプキーを作成します。"))) Capture();
+                    }
 
                     // Extract ボタン
-                    using (new EditorGUI.DisabledGroupScope(newKeysList.index < 0))
+                    using (new EditorGUI.DisabledGroupScope(targetRenderer.objectReferenceValue == null || newKeysList.index < 0))
                     {
                         if (GUILayout.Button(new GUIContent("Extract", "選択中の新しいシェイプキーが含む元のシェイプキーの値を、Target の SkinnedMeshRenderer に書き戻します。"))) Extract();
                     }
