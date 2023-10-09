@@ -44,7 +44,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             var root = property.serializedObject.targetObject as BlendShapeCombiner;
             var orgLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 0;
-            var rects = Helper.SplitRect(position, false, -1f, 40f, 16f, 40f);
+            var rects = Helper.SplitRect(position, false, -1f, 40f, 16f, 40f, 16f);
             var r = 0;
             var style = new GUIStyle {
                 margin = new RectOffset(0, 0, 0, 0),
@@ -64,6 +64,8 @@ namespace Chigiri.BlendShapeCombiner.Editor
             var p = root.usePercentage ? 100.0 : 1.0;
             var scale = property.FindPropertyRelative("scale");
             scale.doubleValue = EditorGUI.DoubleField(rects[r++], scale.doubleValue * p, numStyle) / p;
+
+            EditorGUI.LabelField(rects[r++], "", root.usePercentage ? "%" : "", style);
 
             EditorGUIUtility.labelWidth = orgLabelWidth;
         }

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -207,7 +208,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             sourceKeysList.drawElementCallback = DrawSourceKeyCallback;
 
             // reorderableList.drawFooterCallback = rect => { };
-            sourceKeysList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, $"Source Keys for \"{self.newKeys[newKeyIndex].name}\"");
+            sourceKeysList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Source Keys");
             sourceKeysList.elementHeightCallback = SourceKeyHeightCallback;
             sourceKeysList.onAddCallback = list =>
             {
@@ -261,7 +262,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
             // 描画
             serializedObject.Update();
-            EditorGUI.BeginChangeCheck();
+            using (var check = new EditorGUI.ChangeCheckScope())
             {
                 // リスト描画の準備
                 PrepareNewKeysList();
@@ -275,16 +276,17 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 EditorGUILayout.PropertyField(clearNormal, new GUIContent("Clear Normal", "法線をクリアする"));
                 EditorGUILayout.PropertyField(clearTangent, new GUIContent("Clear Tangent", "タンジェントをクリアする"));
                 EditorGUILayout.PropertyField(useTextField, new GUIContent("Use Text Field", "シェイプキー選択UIをすべてテキスト入力欄で表示"));
-                EditorGUILayout.PropertyField(usePercentage, new GUIContent("Use Percentage", "Scaleを百分率で指定"));
+                EditorGUILayout.PropertyField(usePercentage, new GUIContent("Use Percentage", "スケール係数を百分率で指定"));
 
-                EditorGUI.BeginDisabledGroup(sourceMesh.objectReferenceValue == null);
-                if (newKeysList != null) newKeysList.DoLayoutList();
-                EditorGUI.EndDisabledGroup();
+                using (new EditorGUI.DisabledGroupScope(sourceMesh.objectReferenceValue == null))
+                {
+                    if (newKeysList != null) newKeysList.DoLayoutList();
+                }
 
                 // 選択中の NewKey
                 if (newKeysList != null && 0 <= newKeysList.index)
                 {
-                    EditorGUILayout.LabelField("Selected New Key:");
+                    EditorGUILayout.LabelField("Detail of selected New Key:");
                     var box = new GUIStyle(GUI.skin.window);
                     box.padding = new RectOffset(15, 15, 10, 10);
                     using (new EditorGUILayout.VerticalScope(box))
@@ -311,43 +313,63 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     EditorGUILayout.HelpBox("Undo 時にメッシュが消えた場合は Revert Target ボタンを押してください。", MessageType.Info, true);
                 }
 
-                EditorGUILayout.BeginHorizontal();
+                using (new EditorGUILayout.HorizontalScope())
                 {
                     // Process And Save As... ボタン
-                    EditorGUI.BeginDisabledGroup(validationError != "");
-                    if (GUILayout.Button(new GUIContent("Process And Save As...", "新しいメッシュを生成し、保存ダイアログを表示します。")))
+                    using (new EditorGUI.DisabledGroupScope(validationError != ""))
                     {
-                        CombinerImpl.Process(self);
+                        if (GUILayout.Button(new GUIContent("Process And Save As...", "新しいメッシュを生成し、保存ダイアログを表示します。")))
+                        {
+                            CombinerImpl.Process(self);
+                        }
                     }
-                    EditorGUI.EndDisabledGroup();
 
                     // Revert Target ボタン
-                    EditorGUI.BeginDisabledGroup(!isRevertTargetEnable);
-                    if (GUILayout.Button(new GUIContent("Revert Target", "Target の SkinnedMeshRenderer にアタッチされていたメッシュを元に戻します。"))) RevertTarget();
-                    EditorGUI.EndDisabledGroup();
+                    using (new EditorGUI.DisabledGroupScope(!isRevertTargetEnable))
+                    {
+                        if (GUILayout.Button(new GUIContent("Revert Target", "Target の SkinnedMeshRenderer にアタッチされていたメッシュを元に戻します。"))) RevertTarget();
+                    }
+                }
 
+                using (new EditorGUILayout.HorizontalScope())
+                {
                     // Capture ボタン
                     if (GUILayout.Button(new GUIContent("Capture", "Target の SkinnedMeshRenderer に設定されているシェイプキー値を合成して、新しいシェイプキーを作成します。"))) Capture();
 
                     // Extract ボタン
-                    EditorGUI.BeginDisabledGroup(newKeysList.index < 0);
-                    if (GUILayout.Button(new GUIContent("Extract", "選択中の新しいシェイプキーが含む元のシェイプキーの値を、Target の SkinnedMeshRenderer に書き戻します。"))) Extract();
-                    EditorGUI.EndDisabledGroup();
+                    using (new EditorGUI.DisabledGroupScope(newKeysList.index < 0))
+                    {
+                        if (GUILayout.Button(new GUIContent("Extract", "選択中の新しいシェイプキーが含む元のシェイプキーの値を、Target の SkinnedMeshRenderer に書き戻します。"))) Extract();
+                    }
 
                     // Sort Sources ボタン
-                    EditorGUI.BeginDisabledGroup(newKeysList.index < 0);
-                    if (GUILayout.Button(new GUIContent("Sort Sources", "選択中の新しいシェイプキーの Source を名前順にソートします。"))) SortSources();
-                    EditorGUI.EndDisabledGroup();
+                    using (new EditorGUI.DisabledGroupScope(newKeysList.index < 0))
+                    {
+                        if (GUILayout.Button(new GUIContent("Sort Sources", "選択中の新しいシェイプキーの Source を名前順にソートします。"))) SortSources();
+                    }
                 }
-                EditorGUILayout.EndHorizontal();
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    using (new EditorGUI.DisabledGroupScope(newKeysList.index < 0))
+                    {
+                        var p = usePercentage.boolValue;
+                        var p3 = p ? "12.3%" : "0.123";
+                        var p2 = p ? "12%" : "0.12";
+                        if (GUILayout.Button(new GUIContent($"Round Scale (like {p3})", "選択中の新しいシェイプキーのスケール係数を、小数第3位（百分率で第1位）までになるよう四捨五入します。"))) RoundScale(1000.0);
+                        if (GUILayout.Button(new GUIContent($"Round Scale (like {p2})", "選択中の新しいシェイプキーのスケール係数を、小数第2位（百分率で整数）までになるよう四捨五入します。"))) RoundScale(100.0);
+                    }
+                }
+
                 EditorGUILayout.Space();
-            }
-            serializedObject.ApplyModifiedProperties();
-            if (EditorGUI.EndChangeCheck())
-            {
-                // 何らかの操作があったときに必要な処理
-                UpdateSourceKeyUIParams();
-                validationError = Helper.Chomp(Validate());
+
+                serializedObject.ApplyModifiedProperties();
+                if (check.changed)
+                {
+                    // 何らかの操作があったときに必要な処理
+                    UpdateSourceKeyUIParams();
+                    validationError = Helper.Chomp(Validate());
+                }
             }
 
             // Target を変更したときに Source Mesh が空なら自動設定
@@ -485,6 +507,17 @@ namespace Chigiri.BlendShapeCombiner.Editor
             if (i < 0) return;
             var newKey = self.newKeys[i];
             newKey.sourceKeys = newKey.sourceKeys.OrderBy(x => x.name).ToArray();
+        }
+
+        void RoundScale(double precision)
+        {
+            var i = newKeysList.index;
+            if (i < 0) return;
+            var newKey = self.newKeys[i];
+            foreach (var key in newKey.sourceKeys)
+            {
+                key.scale = Math.Round(key.scale * precision) / precision;
+            }
         }
 
     }
