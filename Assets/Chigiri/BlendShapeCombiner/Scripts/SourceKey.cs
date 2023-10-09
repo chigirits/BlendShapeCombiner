@@ -13,7 +13,7 @@ namespace Chigiri.BlendShapeCombiner
         public int xSignBounds = 0;
 
         public int _index;
-        public List<string> _nameSelector = new List<string>();
+        public string[] _nameSelector = new string[0];
         public bool _isDeletable;
         public bool _toBeDeleted;
         public bool _useTextField;

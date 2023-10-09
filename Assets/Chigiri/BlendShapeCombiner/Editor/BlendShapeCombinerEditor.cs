@@ -12,7 +12,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
     {
 
         ReorderableList reorderableList;
-        List<string> blendShapes;
+        string[] blendShapes;
         string validationError;
 
         [MenuItem("Chigiri/Create BlendShapeCombiner")]
@@ -150,15 +150,15 @@ namespace Chigiri.BlendShapeCombiner.Editor
         // SourceKeyDrawer に引き渡すUI関連のパラメータを更新
         void UpdateSourceKeyUIParams()
         {
-            for (int i = 0; i < self.newKeys.Count; i++)
+            for (int i = 0; i < self.newKeys.Length; i++)
             {
                 var newKey = self.newKeys[i];
-                for (int j = 0; j < newKey.sourceKeys.Count; j++)
+                for (int j = 0; j < newKey.sourceKeys.Length; j++)
                 {
                     var key = newKey.sourceKeys[j];
                     key._index = j;
                     key._nameSelector = self.useTextField ? null : blendShapes;
-                    key._isDeletable = 2 <= newKey.sourceKeys.Count;
+                    key._isDeletable = 2 <= newKey.sourceKeys.Length;
                     key._toBeDeleted = false;
                     key._useTextField = self.useTextField;
                     key._isSelected = reorderableList != null && i == reorderableList.index;
@@ -223,14 +223,15 @@ namespace Chigiri.BlendShapeCombiner.Editor
             // ブレンドシェイプの選択肢を収集
             if (blendShapes == null)
             {
-                blendShapes = new List<string>();
+                var bs = new List<string>();
                 if (self.sourceMesh != null)
                 {
                     for (var i = 0; i < self.sourceMesh.blendShapeCount; i++)
                     {
-                        blendShapes.Add(self.sourceMesh.GetBlendShapeName(i));
+                        bs.Add(self.sourceMesh.GetBlendShapeName(i));
                     }
                 }
+                blendShapes = bs.ToArray();
                 UpdateSourceKeyUIParams();
             }
 
@@ -290,10 +291,14 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     if (GUILayout.Button(new GUIContent("Capture", "Target の SkinnedMeshRenderer に設定されているシェイプキー値を合成して、新しいシェイプキーを作成します。"))) Capture();
 
                     // Extract ボタン
+                    EditorGUI.BeginDisabledGroup(reorderableList.index < 0);
                     if (GUILayout.Button(new GUIContent("Extract", "選択中の新しいシェイプキーが含む元のシェイプキーの値を、Target の SkinnedMeshRenderer に書き戻します。"))) Extract();
+                    EditorGUI.EndDisabledGroup();
 
                     // Sort Sources ボタン
-                    if (GUILayout.Button(new GUIContent("Sort Sources", "すべての Source を名前順にソートします。"))) SortSources();
+                    EditorGUI.BeginDisabledGroup(reorderableList.index < 0);
+                    if (GUILayout.Button(new GUIContent("Sort Sources", "選択中の新しいシェイプキーの Source を名前順にソートします。"))) SortSources();
+                    EditorGUI.EndDisabledGroup();
                 }
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.Space();
@@ -316,17 +321,17 @@ namespace Chigiri.BlendShapeCombiner.Editor
             if (prevSourceMesh != self.sourceMesh)
             {
                 blendShapes = null;
-                if (self.newKeys.Count == 0)
+                if (self.newKeys.Length == 0)
                 {
-                    self.newKeys.Add(new NewKey
+                    self.newKeys = self.newKeys.Append(new NewKey
                     {
                         name = "new_key",
-                        sourceKeys = new List<SourceKey>
+                        sourceKeys = new SourceKey[]
                         {
                             new SourceKey{ scale = 1f },
                             new SourceKey{ scale = 1f }
                         }
-                    });
+                    }).ToArray();
                 }
             }
         }
@@ -397,44 +402,48 @@ namespace Chigiri.BlendShapeCombiner.Editor
             self.targetRenderer.sharedMesh = self.sourceMesh;
         }
 
-        async void Capture()
+        void Capture()
         {
             Undo.RecordObject(self, "Capture (BlendShapeCombiner)");
             var mesh = self.targetRenderer.sharedMesh;
             var n = mesh.blendShapeCount;
             var newKey = new NewKey{};
             newKey.name = "captured_key";
+            var sourceKeys = new List<SourceKey>();
             for (var i=0; i<n; i++)
             {
                 var weight = self.targetRenderer.GetBlendShapeWeight(i);
                 if (weight == 0) continue;
-                newKey.sourceKeys.Add(new SourceKey{
+                sourceKeys.Add(new SourceKey{
                     name = mesh.GetBlendShapeName(i),
                     scale = weight * 0.01f,
                 });
             }
-            self.newKeys.Add(newKey);
+            newKey.sourceKeys = sourceKeys.ToArray();
+            self.newKeys = self.newKeys.Append(newKey).ToArray();
             UpdateSourceKeyUIParams();
         }
 
-        async void Extract()
+        void Extract()
         {
+            var i = reorderableList.index;
+            if (i < 0) return;
             Undo.RecordObject(self.targetRenderer, "Extract (BlendShapeCombiner)");
             var mesh = self.targetRenderer.sharedMesh;
-            var newKey = self.newKeys[reorderableList.index];
+            var newKey = self.newKeys[i];
             foreach (var sourceKey in newKey.sourceKeys)
             {
-                var i = mesh.GetBlendShapeIndex(sourceKey.name);
-                self.targetRenderer.SetBlendShapeWeight(i, sourceKey.scale * 100f);
+                var j = mesh.GetBlendShapeIndex(sourceKey.name);
+                self.targetRenderer.SetBlendShapeWeight(j, sourceKey.scale * 100f);
             }
         }
 
         void SortSources()
         {
-            foreach (var newKey in self.newKeys)
-            {
-                newKey.sourceKeys = newKey.sourceKeys.OrderBy(x => x.name).ToList();
-            }
+            var i = reorderableList.index;
+            if (i < 0) return;
+            var newKey = self.newKeys[i];
+            newKey.sourceKeys = newKey.sourceKeys.OrderBy(x => x.name).ToArray();
         }
 
     }

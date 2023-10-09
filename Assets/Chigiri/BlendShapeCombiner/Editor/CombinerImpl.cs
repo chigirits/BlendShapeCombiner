@@ -80,7 +80,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
             foreach (var newKey in p.newKeys)
             {
-                var n = newKey.sourceKeys.Count;
+                var n = newKey.sourceKeys.Length;
                 var newFrames = 0;
                 for (var i = 0; i < n; i++)
                 {

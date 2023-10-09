@@ -9,7 +9,7 @@ namespace Chigiri.BlendShapeCombiner
     public class NewKey
     {
         public string name;
-        public List<SourceKey> sourceKeys = new List<SourceKey> {};
+        public SourceKey[] sourceKeys = new SourceKey[0];
     }
 
 }

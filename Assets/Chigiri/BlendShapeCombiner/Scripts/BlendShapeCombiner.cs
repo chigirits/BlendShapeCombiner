@@ -17,7 +17,7 @@ namespace Chigiri.BlendShapeCombiner
         public bool clearNormal;
         public bool clearTangent;
         public bool useTextField;
-        public List<NewKey> newKeys = new List<NewKey>{};
+        public NewKey[] newKeys = new NewKey[0];
 
     }
 
