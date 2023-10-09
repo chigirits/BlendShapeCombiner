@@ -12,33 +12,27 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
         void DrawNameSelector(Rect position, SerializedProperty property)
         {
+            var root = property.serializedObject.targetObject as BlendShapeCombiner;
             var label = "";
             var tooltip = "合成元となるシェイプキーの名前";
             var name = property.FindPropertyRelative("name");
-            var isSelected = property.FindPropertyRelative("_isSelected").boolValue;
-            var useTextField = property.FindPropertyRelative("_useTextField").boolValue;
-            if (!useTextField)
+            if (!root.useTextField)
             {
-                if (!isSelected)
+                var shapeKeys = root._shapeKeys;
+                if (shapeKeys != null && 0 < shapeKeys.Length)
                 {
-                    EditorGUI.LabelField(position, new GUIContent(name.stringValue), new GUIContent(label, tooltip));
-                    return;
-                }
-                var selector = property.FindPropertyRelative("_nameSelector");
-                if (selector.isArray && 0 < selector.arraySize)
-                {
-                    var options = new string[selector.arraySize];
                     var selected = -1;
-                    for (var i = 0; i < selector.arraySize; i++)
+                    for (var i = 0; i < shapeKeys.Length; i++)
                     {
-                        options[i] = selector.GetArrayElementAtIndex(i).stringValue;
-                        if (options[i] == name.stringValue) selected = i;
+                        if (shapeKeys[i] != name.stringValue) continue;
+                        selected = i;
+                        break;
                     }
                     if (name.stringValue == "") selected = 0;
                     if (0 <= selected)
                     {
-                        selected = EditorGUI.Popup(position, label, selected, options);
-                        name.stringValue = options[selected];
+                        selected = EditorGUI.Popup(position, label, selected, shapeKeys);
+                        name.stringValue = shapeKeys[selected];
                         return;
                     }
                 }
@@ -50,7 +44,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
         {
             var orgLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 0;
-            var rects = Helper.SplitRect(position, false, 16f, -1f, 40f, 16f, 40f);
+            var rects = Helper.SplitRect(position, false, -1f, 40f, 16f, 40f);
             var r = 0;
             var style = new GUIStyle {
                 margin = new RectOffset(0, 0, 0, 0),
@@ -59,9 +53,6 @@ namespace Chigiri.BlendShapeCombiner.Editor
             var numStyle = EditorStyles.numberField;
             numStyle.margin = new RectOffset { };
             numStyle.padding = new RectOffset { };
-            var index = property.FindPropertyRelative("_index");
-
-            EditorGUI.LabelField(rects[r++], "", $"{index.intValue}", style);
 
             DrawNameSelector(rects[r++], property);
 

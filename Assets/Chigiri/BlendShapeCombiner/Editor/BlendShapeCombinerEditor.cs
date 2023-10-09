@@ -14,7 +14,6 @@ namespace Chigiri.BlendShapeCombiner.Editor
         ReorderableList newKeysList;
         ReorderableList sourceKeysList;
         int newKeyIndexOfCurrentSourceKeysList = -1;
-        string[] blendShapes;
         string validationError;
 
         [MenuItem("Chigiri/Create BlendShapeCombiner")]
@@ -118,18 +117,14 @@ namespace Chigiri.BlendShapeCombiner.Editor
         // SourceKeyDrawer に引き渡すUI関連のパラメータを更新
         void UpdateSourceKeyUIParams()
         {
-            for (int i = 0; i < self.newKeys.Length; i++)
-            {
-                var newKey = self.newKeys[i];
-                for (int j = 0; j < newKey.sourceKeys.Length; j++)
-                {
-                    var key = newKey.sourceKeys[j];
-                    key._index = j;
-                    key._nameSelector = self.useTextField ? null : blendShapes;
-                    key._useTextField = self.useTextField;
-                    key._isSelected = newKeysList != null && i == newKeysList.index;
-                }
-            }
+            // for (int i = 0; i < self.newKeys.Length; i++)
+            // {
+            //     var newKey = self.newKeys[i];
+            //     for (int j = 0; j < newKey.sourceKeys.Length; j++)
+            //     {
+            //         var key = newKey.sourceKeys[j];
+            //     }
+            // }
         }
 
         void PrepareNewKeysList()
@@ -162,11 +157,11 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     sourceKeys.InsertArrayElementAtIndex(1);
                 }
             };
-            // reorderableList.onAddDropdownCallback = (rect, list) => Debug.Log("onAddDropdown");
-            // reorderableList.onCanAddCallback = list => true;
-            // reorderableList.onCanRemoveCallback = list => true;
-            // reorderableList.onChangedCallback = list => Debug.Log("onChanged");
-            // reorderableList.onMouseUpCallback = list => { };
+            // newKeysList.onAddDropdownCallback = (rect, list) => Debug.Log("onAddDropdown");
+            // newKeysList.onCanAddCallback = list => true;
+            // newKeysList.onCanRemoveCallback = list => 1 <= newKeys.arraySize;
+            // newKeysList.onChangedCallback = list => Debug.Log("onChanged");
+            // newKeysList.onMouseUpCallback = list => { };
             newKeysList.onRemoveCallback = list =>
             {
                 newKeys.DeleteArrayElementAtIndex(list.index);
@@ -220,11 +215,11 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 // sourceKey.FindPropertyRelative("scale").floatValue = 1f;
                 // sourceKey.FindPropertyRelative("xSignBounds").intValue = 0;
             };
-            // reorderableList.onAddDropdownCallback = (rect, list) => Debug.Log("onAddDropdown");
-            // reorderableList.onCanAddCallback = list => true;
-            // reorderableList.onCanRemoveCallback = list => true;
-            // reorderableList.onChangedCallback = list => Debug.Log("onChanged");
-            // reorderableList.onMouseUpCallback = list => { };
+            // sourceKeysList.onAddDropdownCallback = (rect, list) => Debug.Log("onAddDropdown");
+            // sourceKeysList.onCanAddCallback = list => true;
+            // sourceKeysList.onCanRemoveCallback = list => 1 <= sourceKeys.arraySize;
+            // sourceKeysList.onChangedCallback = list => Debug.Log("onChanged");
+            // sourceKeysList.onMouseUpCallback = list => { };
             sourceKeysList.onRemoveCallback = list =>
             {
                 sourceKeys.DeleteArrayElementAtIndex(list.index);
@@ -234,22 +229,24 @@ namespace Chigiri.BlendShapeCombiner.Editor
             sourceKeysList.onSelectCallback = list => UpdateSourceKeyUIParams();
         }
 
+        void RecollectShapeKeys()
+        {
+            if (self.sourceMesh == null)
+            {
+                self._shapeKeys = new string[0];
+                return;
+            }
+            var n = self.sourceMesh.blendShapeCount;
+            self._shapeKeys = new string[n];
+            for (var i = 0; i < n; i++) self._shapeKeys[i] = self.sourceMesh.GetBlendShapeName(i);
+        }
+
         public override void OnInspectorGUI()
         {
             // ブレンドシェイプの選択肢を収集
-            if (blendShapes == null)
+            if (self._shapeKeys == null)
             {
-                var bs = new List<string>();
-                if (self.sourceMesh != null)
-                {
-                    var n = self.sourceMesh.blendShapeCount;
-                    blendShapes = new string[n];
-                    for (var i = 0; i < n; i++)
-                    {
-                        bs.Add(self.sourceMesh.GetBlendShapeName(i));
-                    }
-                }
-                blendShapes = bs.ToArray();
+                RecollectShapeKeys();
                 UpdateSourceKeyUIParams();
             }
 
@@ -281,7 +278,10 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 // 選択中の NewKey
                 if (newKeysList != null && 0 <= newKeysList.index)
                 {
-                    using (new EditorGUILayout.VerticalScope())
+                    EditorGUILayout.LabelField("Selected New Key:");
+                    var box = new GUIStyle(GUI.skin.window);
+                    box.padding = new RectOffset(15, 15, 10, 10);
+                    using (new EditorGUILayout.VerticalScope(box))
                     {
                         var i = newKeysList.index;
                         var newKey = newKeys.GetArrayElementAtIndex(i);
@@ -353,7 +353,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             // Source Mesh を変更したときはブレンドシェイプ一覧を次回更新する
             if (prevSourceMesh != self.sourceMesh)
             {
-                blendShapes = null;
+                self._shapeKeys = null;
                 if (self.newKeys.Length == 0)
                 {
                     self.newKeys = new NewKey[1];
@@ -363,8 +363,8 @@ namespace Chigiri.BlendShapeCombiner.Editor
                         sourceKeys = new SourceKey[]
                         {
                             new SourceKey{ scale = 1f },
-                            new SourceKey{ scale = 1f }
-                        }
+                            new SourceKey{ scale = 1f },
+                        },
                     };
                 }
             }
@@ -372,6 +372,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
         public void Awake()
         {
+            RecollectShapeKeys();
             UpdateSourceKeyUIParams();
             validationError = Helper.Chomp(Validate());
         }
