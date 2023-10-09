@@ -76,6 +76,11 @@ namespace Chigiri.BlendShapeCombiner.Editor
             get { return serializedObject.FindProperty("useTextField"); }
         }
 
+        SerializedProperty usePercentage
+        {
+            get { return serializedObject.FindProperty("usePercentage"); }
+        }
+
         // Revert Target ボタンを有効にするときtrue
         bool isRevertTargetEnable
         {
@@ -270,6 +275,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 EditorGUILayout.PropertyField(clearNormal, new GUIContent("Clear Normal", "法線をクリアする"));
                 EditorGUILayout.PropertyField(clearTangent, new GUIContent("Clear Tangent", "タンジェントをクリアする"));
                 EditorGUILayout.PropertyField(useTextField, new GUIContent("Use Text Field", "シェイプキー選択UIをすべてテキスト入力欄で表示"));
+                EditorGUILayout.PropertyField(usePercentage, new GUIContent("Use Percentage", "Scaleを百分率で指定"));
 
                 EditorGUI.BeginDisabledGroup(sourceMesh.objectReferenceValue == null);
                 if (newKeysList != null) newKeysList.DoLayoutList();

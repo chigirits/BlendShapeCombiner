@@ -10,9 +10,8 @@ namespace Chigiri.BlendShapeCombiner.Editor
     public class SourceKeyDrawer : PropertyDrawer
     {
 
-        void DrawNameSelector(Rect position, SerializedProperty property)
+        void DrawNameSelector(Rect position, SerializedProperty property, BlendShapeCombiner root)
         {
-            var root = property.serializedObject.targetObject as BlendShapeCombiner;
             var label = "";
             var tooltip = "合成元となるシェイプキーの名前";
             var name = property.FindPropertyRelative("name");
@@ -42,6 +41,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            var root = property.serializedObject.targetObject as BlendShapeCombiner;
             var orgLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 0;
             var rects = Helper.SplitRect(position, false, -1f, 40f, 16f, 40f);
@@ -54,15 +54,16 @@ namespace Chigiri.BlendShapeCombiner.Editor
             numStyle.margin = new RectOffset { };
             numStyle.padding = new RectOffset { };
 
-            DrawNameSelector(rects[r++], property);
+            DrawNameSelector(rects[r++], property, root);
 
             var xSignBounds = property.FindPropertyRelative("xSignBounds");
             xSignBounds.intValue = EditorGUI.Popup(rects[r++], "", xSignBounds.intValue+1, new string[]{"L","LR","R"}) - 1;
 
             EditorGUI.LabelField(rects[r++], "", " x", style);
 
+            var p = root.usePercentage ? 100f : 1f;
             var scale = property.FindPropertyRelative("scale");
-            scale.floatValue = EditorGUI.FloatField(rects[r++], scale.floatValue, numStyle);
+            scale.floatValue = EditorGUI.FloatField(rects[r++], scale.floatValue * p, numStyle) / p;
 
             EditorGUIUtility.labelWidth = orgLabelWidth;
         }

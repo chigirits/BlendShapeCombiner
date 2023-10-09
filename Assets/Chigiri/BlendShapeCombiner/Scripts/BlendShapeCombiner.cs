@@ -18,6 +18,7 @@ namespace Chigiri.BlendShapeCombiner
         public bool clearNormal;
         public bool clearTangent;
         public bool useTextField;
+        public bool usePercentage;
         public NewKey[] newKeys = new NewKey[0];
 
         [NonSerialized] public string[] _shapeKeys;
