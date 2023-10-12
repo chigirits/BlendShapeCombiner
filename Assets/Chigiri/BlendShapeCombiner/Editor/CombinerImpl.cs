@@ -78,6 +78,14 @@ namespace Chigiri.BlendShapeCombiner.Editor
 
             var sourceVertices = Helper.GetPosedVertices(p.targetRenderer, source);
 
+            var debugLR = new int[3]{ 0, 0, 0 };
+            for (var j = 0; j < nVertex; j++)
+            {
+                var v = sourceVertices[j];
+                debugLR[v.x<0 ? 0 : 0<v.x ? 2 : 1]++;
+            }
+            Debug.Log($"Vertex xSignBounds: L={debugLR[0]} C={debugLR[1]} R={debugLR[2]}");
+
             foreach (var newKey in p.newKeys)
             {
                 var n = newKey.sourceKeys.Length;
@@ -104,14 +112,13 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     {
                         var key = newKey.sourceKeys[i];
                         int index = src.GetBlendShapeIndex(key.name);
-
+                        var xb = key.xSignBounds;
                         var scale = new double[nVertex];
                         for (var j = 0; j < nVertex; j++)
                         {
                             var v = sourceVertices[j];
-                            var xb = key.xSignBounds;
-                            var includes = xb==0 || xb<0 && v.x<0 || 0<xb && 0<v.x;
-                            scale[j] = includes ? key.scale : 1.0;
+                            var includes = xb==0 || 0 < xb * v.x;
+                            scale[j] = includes ? key.scale : 0.0;
                         }
 
                         weight += src.GetBlendShapeFrameWeight(index, frame);
