@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Chigiri.BlendShapeCombiner
@@ -11,6 +12,7 @@ namespace Chigiri.BlendShapeCombiner
     public class BlendShapeCombiner : MonoBehaviour
     {
 
+        public int version;
         public SkinnedMeshRenderer targetRenderer;
         public Mesh sourceMesh;
         public bool overwriteExistingKeys;
@@ -22,6 +24,11 @@ namespace Chigiri.BlendShapeCombiner
         public NewKey[] newKeys = new NewKey[0];
 
         [NonSerialized] public string[] _shapeKeys;
+
+        public void ReplaceWithClone()
+        {
+            newKeys = newKeys.Select(k => k.Clone()).ToArray();
+        }
     }
 
 }

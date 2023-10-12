@@ -43,12 +43,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             Mesh ret = Object.Instantiate(source);
             ret.name = source.name;
             var src = Object.Instantiate(ret);
-            if (p.clearAllExistingKeys)
-            {
-                ret.ClearBlendShapes();
-            }
-            else
-            if (p.overwriteExistingKeys)
+            if (p.clearAllExistingKeys || p.overwriteExistingKeys)
             {
                 ret.ClearBlendShapes();
                 var n = source.blendShapeCount;
@@ -56,9 +51,14 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 {
                     var key = source.GetBlendShapeName(i);
                     var skip = false;
-                    foreach (var newKey in p.newKeys)
+                    if (p.clearAllExistingKeys)
                     {
-                        if (newKey.name == key) skip = true;
+                        /* if (!key.StartsWith("vrc.")) */ skip = true;
+                    }
+                    else
+                    if (p.overwriteExistingKeys)
+                    {
+                        foreach (var newKey in p.newKeys) if (newKey.name == key) skip = true;
                     }
                     if (skip) continue;
                     int numFrames = source.GetBlendShapeFrameCount(i);

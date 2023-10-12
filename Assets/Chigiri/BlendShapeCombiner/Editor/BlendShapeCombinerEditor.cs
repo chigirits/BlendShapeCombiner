@@ -13,6 +13,8 @@ namespace Chigiri.BlendShapeCombiner.Editor
     public class BlendShapeCombinerEditor : UnityEditor.Editor
     {
 
+        const int SCHEMA_VERSION = 1004;
+
         ReorderableList newKeysList;
         ReorderableList sourceKeysList;
         int newKeyIndexOfCurrentSourceKeysList = -1;
@@ -36,6 +38,11 @@ namespace Chigiri.BlendShapeCombiner.Editor
         BlendShapeCombiner self
         {
             get { return target as BlendShapeCombiner; }
+        }
+
+        SerializedProperty version
+        {
+            get { return serializedObject.FindProperty("version"); }
         }
 
         SerializedProperty newKeys
@@ -415,8 +422,20 @@ namespace Chigiri.BlendShapeCombiner.Editor
             }
         }
 
+        void Migrate()
+        {
+            if (SCHEMA_VERSION <= self.version) return;
+            Debug.Log($"Migrate: version {self.version} -> {SCHEMA_VERSION}");
+            self.ReplaceWithClone();
+            self.version = SCHEMA_VERSION;
+            serializedObject.Update();
+            var j = JsonUtility.ToJson(self);
+            Debug.Log($"JSON: {j}");
+        }
+
         public void Awake()
         {
+            Migrate();
             RecollectShapeKeys();
             UpdateSourceKeyUIParams();
             validationError = Helper.Chomp(Validate());
