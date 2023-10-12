@@ -149,8 +149,9 @@ namespace Chigiri.BlendShapeCombiner.Editor
             newKeysList.onAddCallback = list =>
             {
                 // New Key を追加
-                var n = newKeys.arraySize;
+                var n = 0 <= list.index ? list.index : newKeys.arraySize;
                 newKeys.InsertArrayElementAtIndex(n);
+                if (0 <= list.index) return;
                 var newKey = newKeys.GetArrayElementAtIndex(n);
                 var name = newKey.FindPropertyRelative("name");
                 if (name.stringValue == "") name.stringValue = "new_key";
@@ -213,7 +214,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             sourceKeysList.onAddCallback = list =>
             {
                 // Source Key を追加
-                var n = sourceKeys.arraySize;
+                var n = 0 <= list.index ? list.index : sourceKeys.arraySize;
                 sourceKeys.InsertArrayElementAtIndex(n);
                 // var sourceKey = sourceKeys.GetArrayElementAtIndex(n);
                 // var name = sourceKey.FindPropertyRelative("name");
