@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEditorInternal;
 using System;
 using System.Collections.Generic;
@@ -131,6 +132,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             //         var key = newKey.sourceKeys[j];
             //     }
             // }
+            // serializedObject.Update();
         }
 
         void PrepareNewKeysList()
@@ -241,11 +243,13 @@ namespace Chigiri.BlendShapeCombiner.Editor
             if (self.sourceMesh == null)
             {
                 self._shapeKeys = new string[0];
+                serializedObject.Update();
                 return;
             }
             var n = self.sourceMesh.blendShapeCount;
             self._shapeKeys = new string[n];
             for (var i = 0; i < n; i++) self._shapeKeys[i] = self.sourceMesh.GetBlendShapeName(i);
+            serializedObject.Update();
         }
 
         public override void OnInspectorGUI()
@@ -467,6 +471,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
         {
             Undo.RecordObject(self.targetRenderer, "Revert Target (BlendShapeCombiner)");
             self.targetRenderer.sharedMesh = self.sourceMesh;
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene()); 
         }
 
         void Capture()
@@ -489,6 +494,9 @@ namespace Chigiri.BlendShapeCombiner.Editor
             newKey.sourceKeys = sourceKeys.ToArray();
             self.newKeys = self.newKeys.Append(newKey).ToArray();
             UpdateSourceKeyUIParams();
+            serializedObject.Update();
+            EditorUtility.SetDirty(self);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene()); 
         }
 
         void Extract()
@@ -503,25 +511,34 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 var j = mesh.GetBlendShapeIndex(sourceKey.name);
                 self.targetRenderer.SetBlendShapeWeight(j, (float)(sourceKey.scale * 100.0));
             }
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene()); 
         }
 
         void SortSources()
         {
             var i = newKeysList.index;
             if (i < 0) return;
+            Undo.RecordObject(self, "Sort Sources (BlendShapeCombiner)");
             var newKey = self.newKeys[i];
             newKey.sourceKeys = newKey.sourceKeys.OrderBy(x => x.name).ToArray();
+            serializedObject.Update();
+            EditorUtility.SetDirty(self);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene()); 
         }
 
         void RoundScale(double precision)
         {
             var i = newKeysList.index;
             if (i < 0) return;
+            Undo.RecordObject(self, "Round Scale (BlendShapeCombiner)");
             var newKey = self.newKeys[i];
             foreach (var key in newKey.sourceKeys)
             {
                 key.scale = Math.Round(key.scale * precision) / precision;
             }
+            serializedObject.Update();
+            EditorUtility.SetDirty(self);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene()); 
         }
 
     }
