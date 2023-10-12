@@ -10,14 +10,16 @@ namespace Chigiri.BlendShapeCombiner
     public class NewKey
     {
         public string name;
+        public bool forAnimation = true;
         public SourceKey[] sourceKeys = new SourceKey[0];
 
-        public NewKey Clone()
+        public NewKey Clone(int oldVersion)
         {
             return new NewKey
             {
                 name = this.name,
-                sourceKeys = this.sourceKeys.Select(k => k.Clone()).ToArray(),
+                forAnimation = this.forAnimation || oldVersion < 1005,
+                sourceKeys = this.sourceKeys.Select(k => k.Clone(oldVersion)).ToArray(),
             };
         }
     }

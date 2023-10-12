@@ -4,6 +4,7 @@ using UnityEditor.SceneManagement;
 using UnityEditorInternal;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Chigiri.BlendShapeCombiner.Editor
@@ -13,7 +14,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
     public class BlendShapeCombinerEditor : UnityEditor.Editor
     {
 
-        const int SCHEMA_VERSION = 1004;
+        const int SCHEMA_VERSION = 1005;
 
         ReorderableList newKeysList;
         ReorderableList sourceKeysList;
@@ -309,6 +310,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
                         PrepareSourceKeysList(i);
 
                         EditorGUILayout.PropertyField(newKey.FindPropertyRelative("name"), new GUIContent("Name", "新しく作成するシェイプキーの名前"));
+                        EditorGUILayout.PropertyField(newKey.FindPropertyRelative("forAnimation"), new GUIContent("For Animation", "アニメーション出力対象"));
                         if (sourceKeysList != null) sourceKeysList.DoLayoutList();
                     }
                 }
@@ -385,6 +387,15 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     }
                 }
 
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    // Create Animation Clips ボタン
+                    using (new EditorGUI.DisabledGroupScope(validationError != ""))
+                    {
+                        if (GUILayout.Button(new GUIContent("Create Animation Clips", "指定したフォルダ内に、各新規シェイプキーに対応するアニメーションクリップを生成します。"))) CreateAnimationClips();
+                    }
+                }
+
                 EditorGUILayout.Space();
 
                 serializedObject.ApplyModifiedProperties();
@@ -426,7 +437,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
         {
             if (SCHEMA_VERSION <= self.version) return;
             Debug.Log($"Migrate: version {self.version} -> {SCHEMA_VERSION}");
-            self.ReplaceWithClone();
+            self.ReplaceWithClone(self.version);
             self.version = SCHEMA_VERSION;
             serializedObject.Update();
             var j = JsonUtility.ToJson(self);
@@ -584,6 +595,43 @@ namespace Chigiri.BlendShapeCombiner.Editor
             serializedObject.Update();
             EditorUtility.SetDirty(self);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene()); 
+        }
+
+        void CreateAnimationClips()
+        {
+            string dir = AssetDatabase.GetAssetPath(self.sourceMesh);
+            dir = dir == "" ? "Assets" : Path.GetDirectoryName(dir);
+            string path = EditorUtility.SaveFolderPanel("Save the animations into", dir, "");
+            if (path.Length == 0) return;
+
+            if (!path.StartsWith(Application.dataPath))
+            {
+                Debug.LogError("Invalid path: Path must be under " + Application.dataPath);
+                return;
+            }
+            path = path.Replace(Application.dataPath, "Assets");
+
+            var keys = new HashSet<string>();
+            foreach (var newKey in self.newKeys)
+            {
+                if (!newKey.forAnimation) continue;
+                keys.Add(newKey.name);
+            }
+
+            var objectPath = self.targetRenderer.gameObject.name;
+            foreach (var newKey in self.newKeys)
+            {
+                if (!newKey.forAnimation) continue;
+                var clip = new AnimationClip();
+                foreach (var key in keys)
+                {
+                    var v = key == newKey.name ? 1f : 0f;
+                    var curve = AnimationCurve.Linear(0f, v, 1f/60f, v);
+                    clip.SetCurve(objectPath, typeof(SkinnedMeshRenderer), "blendShape." + key, curve);
+                }
+                AssetDatabase.CreateAsset(clip, Path.Combine(path, newKey.name + ".anim"));
+            }
+
         }
 
     }

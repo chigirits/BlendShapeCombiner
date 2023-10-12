@@ -12,7 +12,7 @@ namespace Chigiri.BlendShapeCombiner
         public double scale = 1.0;
         public int xSignBounds = 0;
 
-        public SourceKey Clone()
+        public SourceKey Clone(int oldVersion)
         {
             return new SourceKey
             {

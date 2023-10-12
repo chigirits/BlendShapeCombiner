@@ -25,9 +25,9 @@ namespace Chigiri.BlendShapeCombiner
 
         [NonSerialized] public string[] _shapeKeys;
 
-        public void ReplaceWithClone()
+        public void ReplaceWithClone(int oldVersion)
         {
-            newKeys = newKeys.Select(k => k.Clone()).ToArray();
+            newKeys = newKeys.Select(k => k.Clone(oldVersion)).ToArray();
         }
     }
 
