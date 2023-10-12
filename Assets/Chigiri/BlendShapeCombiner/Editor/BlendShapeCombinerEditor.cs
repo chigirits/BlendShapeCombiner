@@ -349,11 +349,20 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     {
                         if (GUILayout.Button(new GUIContent("Extract", "選択中の新しいシェイプキーが含む元のシェイプキーの値を、Target の SkinnedMeshRenderer に書き戻します。"))) Extract();
                     }
+                }
 
+                using (new EditorGUILayout.HorizontalScope())
+                {
                     // Sort Sources ボタン
                     using (new EditorGUI.DisabledGroupScope(newKeysList.index < 0))
                     {
                         if (GUILayout.Button(new GUIContent("Sort Sources", "選択中の新しいシェイプキーの Source を名前順にソートします。"))) SortSources();
+                    }
+
+                    // Merge Down ボタン
+                    using (new EditorGUI.DisabledGroupScope(newKeysList.index < 0 || newKeys.arraySize - 1 <= newKeysList.index))
+                    {
+                        if (GUILayout.Button(new GUIContent("Merge Down", "選択中の新しいシェイプキーを、その下の項目にマージします。"))) MergeDown();
                     }
                 }
 
@@ -521,6 +530,23 @@ namespace Chigiri.BlendShapeCombiner.Editor
             Undo.RecordObject(self, "Sort Sources (BlendShapeCombiner)");
             var newKey = self.newKeys[i];
             newKey.sourceKeys = newKey.sourceKeys.OrderBy(x => x.name).ToArray();
+            serializedObject.Update();
+            EditorUtility.SetDirty(self);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene()); 
+        }
+
+        void MergeDown()
+        {
+            var i = newKeysList.index;
+            if (i < 0 || self.newKeys.Length - 1 <= i) return;
+            Undo.RecordObject(self, "Merge Down (BlendShapeCombiner)");
+            var src = self.newKeys[i];
+            var dst = self.newKeys[i+1];
+            dst.sourceKeys = src.sourceKeys.Concat(dst.sourceKeys).ToArray();
+            dst.name = src.name + " + " + dst.name;
+            var l = self.newKeys.ToList();
+            l.RemoveAt(i);
+            self.newKeys = l.ToArray();
             serializedObject.Update();
             EditorUtility.SetDirty(self);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene()); 
