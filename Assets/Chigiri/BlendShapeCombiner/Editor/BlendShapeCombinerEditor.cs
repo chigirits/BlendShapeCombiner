@@ -61,6 +61,11 @@ namespace Chigiri.BlendShapeCombiner.Editor
             get { return serializedObject.FindProperty("sourceMesh"); }
         }
 
+        SerializedProperty showExpertOptions
+        {
+            get { return serializedObject.FindProperty("showExpertOptions"); }
+        }
+
         SerializedProperty overwriteExistingKeys
         {
             get { return serializedObject.FindProperty("overwriteExistingKeys"); }
@@ -286,10 +291,16 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 EditorGUILayout.PropertyField(sourceMesh, new GUIContent("Source Mesh", "オリジナルのメッシュ"));
                 EditorGUILayout.PropertyField(overwriteExistingKeys, new GUIContent("Overwrite Existing Keys", "既存の同名シェイプキーに上書きする"));
                 EditorGUILayout.PropertyField(clearAllExistingKeys, new GUIContent("Clear All Existing Keys", "既存のシェイプキーをすべて削除する"));
-                EditorGUILayout.PropertyField(clearNormal, new GUIContent("Clear Normal", "法線をクリアする"));
-                EditorGUILayout.PropertyField(clearTangent, new GUIContent("Clear Tangent", "タンジェントをクリアする"));
                 EditorGUILayout.PropertyField(useTextField, new GUIContent("Use Text Field", "シェイプキー選択UIをすべてテキスト入力欄で表示"));
                 EditorGUILayout.PropertyField(usePercentage, new GUIContent("Use Percentage", "スケール係数を百分率で指定"));
+                if (showExpertOptions.boolValue = EditorGUILayout.Foldout(showExpertOptions.boolValue, "Expert Options"))
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        EditorGUILayout.PropertyField(clearNormal, new GUIContent("Clear Normal", "法線をクリアする"));
+                        EditorGUILayout.PropertyField(clearTangent, new GUIContent("Clear Tangent", "タンジェントをクリアする"));
+                    }
+                }
 
                 using (new EditorGUI.DisabledGroupScope(sourceMesh.objectReferenceValue == null))
                 {
@@ -310,7 +321,13 @@ namespace Chigiri.BlendShapeCombiner.Editor
                         PrepareSourceKeysList(i);
 
                         EditorGUILayout.PropertyField(newKey.FindPropertyRelative("name"), new GUIContent("Name", "新しく作成するシェイプキーの名前"));
-                        EditorGUILayout.PropertyField(newKey.FindPropertyRelative("forAnimation"), new GUIContent("For Animation", "アニメーション出力対象"));
+                        if (showExpertOptions.boolValue = EditorGUILayout.Foldout(showExpertOptions.boolValue, "Expert Options"))
+                        {
+                            using (new EditorGUI.IndentLevelScope())
+                            {
+                                EditorGUILayout.PropertyField(newKey.FindPropertyRelative("forAnimation"), new GUIContent("For Animation", "アニメーション出力対象"));
+                            }
+                        }
                         if (sourceKeysList != null) sourceKeysList.DoLayoutList();
                     }
                 }
@@ -387,12 +404,18 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     }
                 }
 
-                using (new EditorGUILayout.HorizontalScope())
+                if (showExpertOptions.boolValue = EditorGUILayout.Foldout(showExpertOptions.boolValue, "Expert Options"))
                 {
-                    // Create Animation Clips ボタン
-                    using (new EditorGUI.DisabledGroupScope(validationError != ""))
+                    using (new EditorGUI.IndentLevelScope())
                     {
-                        if (GUILayout.Button(new GUIContent("Create Animation Clips", "指定したフォルダ内に、各新規シェイプキーに対応するアニメーションクリップを生成します。"))) CreateAnimationClips();
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            // Create Animation Clips ボタン
+                            using (new EditorGUI.DisabledGroupScope(validationError != ""))
+                            {
+                                if (GUILayout.Button(new GUIContent("Create Animation Clips", "指定したフォルダ内に、各新規シェイプキーに対応するアニメーションクリップを生成します。"))) CreateAnimationClips();
+                            }
+                        }
                     }
                 }
 

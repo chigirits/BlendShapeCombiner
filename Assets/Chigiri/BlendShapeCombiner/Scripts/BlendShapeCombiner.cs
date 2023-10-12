@@ -15,6 +15,7 @@ namespace Chigiri.BlendShapeCombiner
         public int version;
         public SkinnedMeshRenderer targetRenderer;
         public Mesh sourceMesh;
+        public bool showExpertOptions;
         public bool overwriteExistingKeys;
         public bool clearAllExistingKeys;
         public bool clearNormal;
