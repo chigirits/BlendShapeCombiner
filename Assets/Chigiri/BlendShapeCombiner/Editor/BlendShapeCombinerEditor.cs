@@ -428,6 +428,9 @@ namespace Chigiri.BlendShapeCombiner.Editor
                             {
                                 if (GUILayout.Button(new GUIContent("Create Animation Clips", "指定したフォルダ内に、各新規シェイプキーに対応するアニメーションクリップを生成します。"))) CreateAnimationClips();
                             }
+
+                            // Create VRC Shape Keys ボタン
+                            if (GUILayout.Button(new GUIContent("Create VRC Shape Keys", "vrc. で始まるシェイプキーを改変するための新規シェイプキーを自動作成します。"))) CreateVRCShapeKeys();
                         }
                     }
                 }
@@ -638,6 +641,28 @@ namespace Chigiri.BlendShapeCombiner.Editor
             serializedObject.Update();
             EditorUtility.SetDirty(self);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene()); 
+        }
+
+        void CreateVRCShapeKeys()
+        {
+            var defined = new HashSet<string>(self.newKeys.Select(k => k.name));
+            var source = self.sourceMesh;
+            var n = source.blendShapeCount;
+            var newKeys = new List<NewKey>();
+            for (var i = 0; i < n; i++)
+            {
+                var name = source.GetBlendShapeName(i);
+                if (!name.StartsWith("vrc.")) continue;
+                if (defined.Contains(name)) continue;
+                var sourceKey = new SourceKey();
+                sourceKey.name = name;
+                var newKey = new NewKey();
+                newKey.name = name;
+                newKey.forAnimation = false;
+                newKey.sourceKeys = new SourceKey[] { sourceKey };
+                newKeys.Add(newKey);
+            }
+            self.newKeys = newKeys.Concat(self.newKeys).ToArray();
         }
 
         void CreateAnimationClips()
