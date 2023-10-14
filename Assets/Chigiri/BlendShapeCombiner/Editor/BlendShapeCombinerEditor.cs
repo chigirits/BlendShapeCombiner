@@ -325,7 +325,10 @@ namespace Chigiri.BlendShapeCombiner.Editor
                         {
                             using (new EditorGUI.IndentLevelScope())
                             {
-                                EditorGUILayout.PropertyField(newKey.FindPropertyRelative("forAnimation"), new GUIContent("For Animation", "アニメーション出力対象"));
+                                var bakeIntoBase = newKey.FindPropertyRelative("bakeIntoBase");
+                                EditorGUILayout.PropertyField(bakeIntoBase, new GUIContent("Bake Into Base", "ベースメッシュにベイク"));
+                                using (new EditorGUI.DisabledGroupScope(bakeIntoBase.boolValue))
+                                    EditorGUILayout.PropertyField(newKey.FindPropertyRelative("forAnimation"), new GUIContent("For Animation", "アニメーション出力対象"));
                             }
                         }
                         if (sourceKeysList != null) sourceKeysList.DoLayoutList();

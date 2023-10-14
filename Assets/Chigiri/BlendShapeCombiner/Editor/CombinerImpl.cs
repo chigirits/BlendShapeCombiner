@@ -127,7 +127,16 @@ namespace Chigiri.BlendShapeCombiner.Editor
                         if (!p.clearNormal) normals = Helper.AddVector3(normals, tempNormals, scale);
                         if (!p.clearTangent) tangents = Helper.AddVector3(tangents, tempTangents, scale);
                     }
-                    ret.AddBlendShapeFrame(newKey.name, weight/n, vertices, normals, tangents);
+                    if (newKey.bakeIntoBase)
+                    {
+                        ret.vertices = Helper.AddVector3(ret.vertices, vertices);
+                        if (!p.clearNormal) ret.normals = Helper.AddVector3(ret.normals, normals);
+                        if (!p.clearTangent) ret.tangents = Helper.AddVector4(ret.tangents, tangents);
+                    }
+                    else
+                    {
+                        ret.AddBlendShapeFrame(newKey.name + groupSuffix, weight/n, vertices, normals, tangents);
+                    }
                 }
             }
             return ret;

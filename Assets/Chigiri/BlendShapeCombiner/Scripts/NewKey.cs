@@ -10,6 +10,7 @@ namespace Chigiri.BlendShapeCombiner
     public class NewKey
     {
         public string name;
+        public bool bakeIntoBase = false;
         public bool forAnimation = true;
         public SourceKey[] sourceKeys = new SourceKey[0];
 
@@ -18,6 +19,7 @@ namespace Chigiri.BlendShapeCombiner
             return new NewKey
             {
                 name = this.name,
+                bakeIntoBase = this.bakeIntoBase,
                 forAnimation = this.forAnimation || oldVersion < 1005,
                 sourceKeys = this.sourceKeys.Select(k => k.Clone(oldVersion)).ToArray(),
             };

@@ -68,6 +68,20 @@ namespace Chigiri.BlendShapeCombiner.Editor
             return result;
         }
 
+        public static Vector3[] AddVector3(Vector3[] src0, Vector3[] src1)
+        {
+            var result = new Vector3[src0.Length];
+            for (int i = 0; i < src0.Length; i++) result[i] = src0[i] + src1[i];
+            return result;
+        }
+
+        public static Vector4[] AddVector4(Vector4[] src0, Vector3[] src1)
+        {
+            var result = new Vector4[src0.Length];
+            for (int i = 0; i < src0.Length; i++) result[i] = src0[i] + (Vector4)src1[i];
+            return result;
+        }
+
         // From https://forum.unity.com/threads/bakemesh-scales-wrong.442212/#post-2860559
         public static Vector3[] GetPosedVertices(SkinnedMeshRenderer skin, Mesh sharedMesh)
         {
