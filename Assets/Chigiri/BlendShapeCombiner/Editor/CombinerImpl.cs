@@ -26,7 +26,10 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 return;
             }
             path = path.Replace(Application.dataPath, "Assets");
+            var existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (existing == null) AssetDatabase.DeleteAsset(path);
             AssetDatabase.CreateAsset(resultMesh, path);
+            AssetDatabase.SaveAssets();
             Debug.Log("Asset exported: " + path);
 
             // Targetのメッシュを差し替えてシェイプキーのウェイトを設定
@@ -86,56 +89,66 @@ namespace Chigiri.BlendShapeCombiner.Editor
             }
             Debug.Log($"Vertex xSignBounds: L={debugLR[0]} C={debugLR[1]} R={debugLR[2]}");
 
+            var groupMap = p.CollectGroupMap();
+            var groups = p.CollectGroups();
+            var noGroup = new string[] { "" };
             foreach (var newKey in p.newKeys)
             {
-                var n = newKey.sourceKeys.Length;
-                var newFrames = 0;
-                for (var i = 0; i < n; i++)
+                var forAnimation = !newKey.bakeIntoBase && newKey.forAnimation;
+                foreach (var group in forAnimation ? groups : noGroup)
                 {
-                    var key = newKey.sourceKeys[i];
-                    int index = src.GetBlendShapeIndex(key.name);
-                    int numFrames = src.GetBlendShapeFrameCount(index);
-                    if (i == 0 || numFrames < newFrames) newFrames = numFrames;
-                }
-
-                var tempVertices = new Vector3[nVertex];
-                var tempNormals = new Vector3[nVertex];
-                var tempTangents = new Vector3[nVertex];
-
-                for (var frame = 0; frame < newFrames; frame++)
-                {
-                    float weight = 0.0f;
-                    var vertices = new Vector3[nVertex];
-                    var normals = new Vector3[nVertex];
-                    var tangents = new Vector3[nVertex];
+                    var groupSuffix = group == "" ? "" : "__" + group;
+                    var n = newKey.sourceKeys.Length;
+                    var newFrames = 0;
                     for (var i = 0; i < n; i++)
                     {
                         var key = newKey.sourceKeys[i];
                         int index = src.GetBlendShapeIndex(key.name);
-                        var xb = key.xSignBounds;
-                        var scale = new double[nVertex];
-                        for (var j = 0; j < nVertex; j++)
-                        {
-                            var v = sourceVertices[j];
-                            var includes = xb==0 || 0 < xb * v.x;
-                            scale[j] = includes ? key.scale : 0.0;
-                        }
+                        int numFrames = src.GetBlendShapeFrameCount(index);
+                        if (i == 0 || numFrames < newFrames) newFrames = numFrames;
+                    }
 
-                        weight += src.GetBlendShapeFrameWeight(index, frame);
-                        source.GetBlendShapeFrameVertices(index, frame, tempVertices, tempNormals, tempTangents);
-                        vertices = Helper.AddVector3(vertices, tempVertices, scale);
-                        if (!p.clearNormal) normals = Helper.AddVector3(normals, tempNormals, scale);
-                        if (!p.clearTangent) tangents = Helper.AddVector3(tangents, tempTangents, scale);
-                    }
-                    if (newKey.bakeIntoBase)
+                    var tempVertices = new Vector3[nVertex];
+                    var tempNormals = new Vector3[nVertex];
+                    var tempTangents = new Vector3[nVertex];
+
+                    for (var frame = 0; frame < newFrames; frame++)
                     {
-                        ret.vertices = Helper.AddVector3(ret.vertices, vertices);
-                        if (!p.clearNormal) ret.normals = Helper.AddVector3(ret.normals, normals);
-                        if (!p.clearTangent) ret.tangents = Helper.AddVector4(ret.tangents, tangents);
-                    }
-                    else
-                    {
-                        ret.AddBlendShapeFrame(newKey.name + groupSuffix, weight/n, vertices, normals, tangents);
+                        float weight = 0.0f;
+                        var vertices = new Vector3[nVertex];
+                        var normals = new Vector3[nVertex];
+                        var tangents = new Vector3[nVertex];
+                        for (var i = 0; i < n; i++)
+                        {
+                            var key = newKey.sourceKeys[i];
+                            int index = src.GetBlendShapeIndex(key.name);
+                            weight += src.GetBlendShapeFrameWeight(index, frame);
+                            if (forAnimation && groupMap[key.name] != group) continue;
+
+                            var xb = key.xSignBounds;
+                            var scale = new double[nVertex];
+                            for (var j = 0; j < nVertex; j++)
+                            {
+                                var v = sourceVertices[j];
+                                var includes = xb==0 || 0 < xb * v.x;
+                                scale[j] = includes ? key.scale : 0.0;
+                            }
+
+                            source.GetBlendShapeFrameVertices(index, frame, tempVertices, tempNormals, tempTangents);
+                            vertices = Helper.AddVector3(vertices, tempVertices, scale);
+                            if (!p.clearNormal) normals = Helper.AddVector3(normals, tempNormals, scale);
+                            if (!p.clearTangent) tangents = Helper.AddVector3(tangents, tempTangents, scale);
+                        }
+                        if (newKey.bakeIntoBase)
+                        {
+                            ret.vertices = Helper.AddVector3(ret.vertices, vertices);
+                            if (!p.clearNormal) ret.normals = Helper.AddVector3(ret.normals, normals);
+                            if (!p.clearTangent) ret.tangents = Helper.AddVector4(ret.tangents, tangents);
+                        }
+                        else
+                        {
+                            ret.AddBlendShapeFrame(newKey.name + groupSuffix, weight/n, vertices, normals, tangents);
+                        }
                     }
                 }
             }

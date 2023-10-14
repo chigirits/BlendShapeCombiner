@@ -98,6 +98,11 @@ namespace Chigiri.BlendShapeCombiner.Editor
             get { return serializedObject.FindProperty("usePercentage"); }
         }
 
+        SerializedProperty groupByRegex
+        {
+            get { return serializedObject.FindProperty("groupByRegex"); }
+        }
+
         SerializedProperty dontClearRegex
         {
             get { return serializedObject.FindProperty("dontClearRegex"); }
@@ -306,6 +311,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     {
                         EditorGUILayout.PropertyField(clearNormal, new GUIContent("Clear Normal", "法線をクリアする"));
                         EditorGUILayout.PropertyField(clearTangent, new GUIContent("Clear Tangent", "タンジェントをクリアする"));
+                        EditorGUILayout.PropertyField(groupByRegex, new GUIContent("GroupBy Regex", "この正規表現にマッチするグループで分割生成する"));
                         EditorGUILayout.PropertyField(dontClearRegex, new GUIContent("Don't Clear Regex", "シェイプキーのクリア時、この正規表現にマッチするものは残す"));
                     }
                 }
@@ -512,6 +518,10 @@ namespace Chigiri.BlendShapeCombiner.Editor
             {
                 return "New Keys を1つ以上指定してください";
             }
+            if (groupByRegex.stringValue != "" && self.CreateGroupByRegex() == null)
+            {
+                return "GroupBy Regex を正規表現として評価できません";
+            }
             var names = new Dictionary<string, bool>();
             for (var j = 0; j < newKeys.arraySize; j++)
             {
@@ -686,27 +696,27 @@ namespace Chigiri.BlendShapeCombiner.Editor
             }
             path = path.Replace(Application.dataPath, "Assets");
 
-            var keys = new HashSet<string>();
-            foreach (var newKey in self.newKeys)
-            {
-                if (!newKey.forAnimation) continue;
-                keys.Add(newKey.name);
-            }
-
+            var groups = self.CollectGroups();
+            var keys = self.CollectAnimationKeys();
             var objectPath = self.targetRenderer.gameObject.name;
             foreach (var newKey in self.newKeys)
             {
-                if (!newKey.forAnimation) continue;
-                var clip = new AnimationClip();
+                if (newKey.bakeIntoBase || !newKey.forAnimation) continue;
+                var savePath = Path.Combine(path, newKey.name + ".anim");
+                var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(savePath);
+                var isNew = clip == null;
+                if (isNew) clip = new AnimationClip(); else clip.ClearCurves();
                 foreach (var key in keys)
                 {
-                    var v = key == newKey.name ? 1f : 0f;
+                    var v = key == newKey.name ? 100f : 0f;
                     var curve = AnimationCurve.Linear(0f, v, 1f/60f, v);
-                    clip.SetCurve(objectPath, typeof(SkinnedMeshRenderer), "blendShape." + key, curve);
+                    var p = "blendShape." + key;
+                    foreach (var group in groups)
+                        clip.SetCurve(objectPath, typeof(SkinnedMeshRenderer), p + (group=="" ? "" : "__"+group), curve);
                 }
-                AssetDatabase.CreateAsset(clip, Path.Combine(path, newKey.name + ".anim"));
+                if (isNew) AssetDatabase.CreateAsset(clip, savePath);
             }
-
+            AssetDatabase.SaveAssets();
         }
 
     }
