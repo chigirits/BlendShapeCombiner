@@ -46,6 +46,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             if (p.clearAllExistingKeys || p.overwriteExistingKeys)
             {
                 ret.ClearBlendShapes();
+                var dontClearRegex = p.CreateDontClearRegex();
                 var n = source.blendShapeCount;
                 for (var i = 0; i < n; i++)
                 {
@@ -53,9 +54,8 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     var skip = false;
                     if (p.clearAllExistingKeys)
                     {
-                        /* if (!key.StartsWith("vrc.")) */ skip = true;
+                        if (dontClearRegex == null || !dontClearRegex.Match(key).Success) skip = true;
                     }
-                    else
                     if (p.overwriteExistingKeys)
                     {
                         foreach (var newKey in p.newKeys) if (newKey.name == key) skip = true;

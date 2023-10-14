@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Chigiri.BlendShapeCombiner.Editor
 {
@@ -95,6 +96,11 @@ namespace Chigiri.BlendShapeCombiner.Editor
         SerializedProperty usePercentage
         {
             get { return serializedObject.FindProperty("usePercentage"); }
+        }
+
+        SerializedProperty dontClearRegex
+        {
+            get { return serializedObject.FindProperty("dontClearRegex"); }
         }
 
         // Revert Target ボタンを有効にするときtrue
@@ -300,6 +306,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     {
                         EditorGUILayout.PropertyField(clearNormal, new GUIContent("Clear Normal", "法線をクリアする"));
                         EditorGUILayout.PropertyField(clearTangent, new GUIContent("Clear Tangent", "タンジェントをクリアする"));
+                        EditorGUILayout.PropertyField(dontClearRegex, new GUIContent("Don't Clear Regex", "シェイプキーのクリア時、この正規表現にマッチするものは残す"));
                     }
                 }
 
@@ -516,7 +523,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 }
                 if (0 <= self.sourceMesh.GetBlendShapeIndex(name) && !(self.overwriteExistingKeys || self.clearAllExistingKeys))
                 {
-                    return $"New Keys [{j}] ({name}) > Name に指定されたシェイプキーは定義済みです。新しい名前を指定してください";
+                    return $"New Keys [{j}] ({name}) > Name に指定されたシェイプキーは定義済みです。新しい名前を指定するか、Overwrite Existing Keys をONにしてください";
                 }
                 if (names.ContainsKey(name))
                 {
