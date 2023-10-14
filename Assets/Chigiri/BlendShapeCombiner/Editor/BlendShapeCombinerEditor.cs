@@ -17,6 +17,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
         const int SCHEMA_VERSION = 1005;
 
         ReorderableList newKeysList;
+        Vector2 newKeysListScrollPos;
         ReorderableList sourceKeysList;
         int newKeyIndexOfCurrentSourceKeysList = -1;
         string validationError;
@@ -302,10 +303,13 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     }
                 }
 
-                using (new EditorGUI.DisabledGroupScope(sourceMesh.objectReferenceValue == null))
-                {
-                    if (newKeysList != null) newKeysList.DoLayoutList();
-                }
+                if (newKeysList != null)
+                    using (var scrollView = new EditorGUILayout.ScrollViewScope(newKeysListScrollPos, GUILayout.Height(300)))
+                    {
+                        newKeysListScrollPos = scrollView.scrollPosition;
+                        using (new EditorGUI.DisabledGroupScope(sourceMesh.objectReferenceValue == null))
+                            newKeysList.DoLayoutList();
+                    }
 
                 // 選択中の NewKey
                 if (newKeysList != null && 0 <= newKeysList.index)
