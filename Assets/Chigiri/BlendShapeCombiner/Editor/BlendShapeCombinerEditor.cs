@@ -374,7 +374,13 @@ namespace Chigiri.BlendShapeCombiner.Editor
                     // Capture ボタン
                     using (new EditorGUI.DisabledGroupScope(targetRenderer.objectReferenceValue == null))
                     {
-                        if (GUILayout.Button(new GUIContent("Capture", "Target の SkinnedMeshRenderer に設定されているシェイプキー値を合成して、新しいシェイプキーを作成します。"))) Capture();
+                        if (GUILayout.Button(new GUIContent("Capture", "Target の SkinnedMeshRenderer に設定されているシェイプキー値を合成して、新しいシェイプキーを作成します。"))) Capture(false);
+                    }
+
+                    // Capture(Overwrite) ボタン
+                    using (new EditorGUI.DisabledGroupScope(targetRenderer.objectReferenceValue == null || newKeysList.index < 0))
+                    {
+                        if (GUILayout.Button(new GUIContent("Capture(Overwrite)", "Target の SkinnedMeshRenderer に設定されているシェイプキー値を合成して、選択中のシェイプキーに上書きします。"))) Capture(true);
                     }
 
                     // Extract ボタン
@@ -543,7 +549,7 @@ namespace Chigiri.BlendShapeCombiner.Editor
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene()); 
         }
 
-        void Capture()
+        void Capture(bool overwrite)
         {
             Undo.RecordObject(self, "Capture (BlendShapeCombiner)");
             var mesh = self.targetRenderer.sharedMesh;
@@ -561,7 +567,14 @@ namespace Chigiri.BlendShapeCombiner.Editor
                 });
             }
             newKey.sourceKeys = sourceKeys.ToArray();
-            self.newKeys = self.newKeys.Append(newKey).ToArray();
+            if (overwrite && 0 <= newKeysList.index)
+            {
+                self.newKeys[newKeysList.index].sourceKeys = newKey.sourceKeys;
+            }
+            else
+            {
+                self.newKeys = self.newKeys.Append(newKey).ToArray();
+            }
             UpdateSourceKeyUIParams();
             serializedObject.Update();
             EditorUtility.SetDirty(self);
